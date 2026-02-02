@@ -5,36 +5,11 @@ import { motion } from 'framer-motion'
 
 export default function EmailCapture() {
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [message, setMessage] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setStatus('loading')
-
-    try {
-      const response = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setStatus('success')
-        setMessage('✓ You\'re on the list! Check your email for confirmation.')
-        setEmail('')
-      } else {
-        setStatus('error')
-        setMessage(data.error || 'Something went wrong. Please try again.')
-      }
-    } catch (error) {
-      setStatus('error')
-      setMessage('Network error. Please try again.')
-    }
-
-    setTimeout(() => setStatus('idle'), 5000)
+    // Open mailto for now (static export compatible)
+    window.location.href = `mailto:contact@agenticfactory.com?subject=Early Access Request&body=Email: ${email}`
   }
 
   return (
@@ -63,29 +38,18 @@ export default function EmailCapture() {
                 placeholder="your@email.com"
                 required
                 className="flex-1 px-6 py-4 text-lg rounded-lg border-2 border-white/20 focus:border-white focus:outline-none"
-                disabled={status === 'loading'}
               />
               <button
                 type="submit"
-                disabled={status === 'loading'}
-                className="px-8 py-4 text-lg font-semibold text-primary-600 bg-white rounded-lg hover:bg-gray-50 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-4 text-lg font-semibold text-primary-600 bg-white rounded-lg hover:bg-gray-50 transition-colors shadow-lg"
               >
-                {status === 'loading' ? 'Joining...' : 'Get Early Access'}
+                Get Early Access
               </button>
             </div>
 
-            {/* Status message */}
-            {message && (
-              <motion.p
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`mt-4 text-sm ${
-                  status === 'success' ? 'text-green-100' : 'text-red-100'
-                }`}
-              >
-                {message}
-              </motion.p>
-            )}
+            <p className="mt-4 text-sm text-white/70">
+              Click to send email request (opens your email client)
+            </p>
           </form>
 
           {/* Benefits */}
