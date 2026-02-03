@@ -2,6 +2,18 @@
 
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+
+// Category-based image mapping (Unsplash)
+const categoryImages: Record<string, string> = {
+  'AI': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=338&fit=crop&q=80',
+  'Marketing': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=338&fit=crop&q=80',
+  'Productivity': 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=600&h=338&fit=crop&q=80',
+  'CRM': 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=600&h=338&fit=crop&q=80',
+  'E-commerce': 'https://images.unsplash.com/photo-1557821552-17105176677c?w=600&h=338&fit=crop&q=80',
+  'Unknown': 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=338&fit=crop&q=80',
+}
 
 interface WorkflowMetadata {
   id: string
@@ -109,16 +121,26 @@ export default function TemplatesPreview() {
             >
               {/* Preview Image Area */}
               <div className="aspect-video bg-factory-stone relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-factory-dark/10 to-factory-orange/20"></div>
+                {/* Real image or gradient fallback */}
+                {template.category && categoryImages[template.category] ? (
+                  <Image
+                    src={categoryImages[template.category]}
+                    alt={template.title}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-br from-factory-dark/10 to-factory-orange/20"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-6xl opacity-20">⚙️</div>
+                    </div>
+                  </>
+                )}
 
                 {/* Price Badge (top-right) */}
-                <div className="absolute top-3 right-3 bg-factory-dark text-white px-3 py-1.5 rounded-md font-mono text-sm font-medium">
+                <div className="absolute top-3 right-3 bg-factory-dark text-white px-3 py-1.5 rounded-md font-mono text-sm font-medium shadow-lg">
                   {template.price}
-                </div>
-
-                {/* Template icon/visual */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-6xl opacity-20">⚙️</div>
                 </div>
               </div>
 
@@ -145,13 +167,12 @@ export default function TemplatesPreview() {
 
                 {/* CTA */}
                 {template.slug && workflows.find(w => w.slug === template.slug) ? (
-                  <a
-                    href={`/templates/${template.slug}.json`}
-                    download
+                  <Link
+                    href={`/templates/${template.slug}`}
                     className="block w-full py-3 text-center font-semibold text-white bg-factory-orange rounded-lg hover:bg-[#E55A2B] transition-colors"
                   >
-                    Télécharger (JSON)
-                  </a>
+                    Voir le Workflow →
+                  </Link>
                 ) : (
                   <button
                     disabled
