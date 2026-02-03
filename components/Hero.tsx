@@ -4,75 +4,122 @@ import { motion } from 'framer-motion'
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-primary-50">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-
-      <div className="relative z-10 max-w-6xl mx-auto text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          {/* Badge */}
-          <div className="inline-flex items-center px-4 py-2 mb-8 text-sm font-medium text-primary-700 bg-primary-100 rounded-full">
-            <span className="relative flex h-2 w-2 mr-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
-            </span>
-            Launching Soon • Get Early Access
-          </div>
-
-          {/* Main heading */}
-          <h1 className="text-5xl md:text-7xl font-bold font-display mb-6 leading-tight">
-            Production-Ready<br />
-            <span className="text-gradient">Automation Templates</span><br />
-            That Actually Work
-          </h1>
-
-          {/* Subheading */}
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Stop debugging free templates. Get tested, documented workflows for n8n & Make.com.{' '}
-            <span className="font-semibold text-gray-900">100% success rate guaranteed.</span>
-          </p>
-
-          {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-8 mb-12">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-600">100%</div>
-              <div className="text-sm text-gray-600">Success Rate</div>
+    <section className="relative min-h-screen flex items-center px-6 py-24 md:py-32 overflow-hidden bg-grid-pattern">
+      <div className="relative z-10 max-w-7xl mx-auto w-full">
+        <div className="grid md:grid-cols-5 gap-12 items-center">
+          {/* Left column - 60% */}
+          <motion.div
+            className="md:col-span-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            {/* Badge */}
+            <div className="inline-flex items-center px-4 py-2 mb-6 text-sm font-medium text-factory-dark bg-factory-stone rounded-md border border-factory-border">
+              Les templates gratuits echouent 70% du temps
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-600">10-15h</div>
-              <div className="text-sm text-gray-600">Time Saved</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-600">€29-59</div>
-              <div className="text-sm text-gray-600">Per Template</div>
-            </div>
-          </div>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a
-              href="#email-signup"
-              className="px-8 py-4 text-lg font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-            >
-              Get Early Access
-            </a>
-            <a
-              href="#templates"
-              className="px-8 py-4 text-lg font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:border-primary-500 transition-colors"
-            >
-              Browse Templates
-            </a>
-          </div>
+            {/* Main heading - Left aligned */}
+            <h1 className="text-5xl md:text-6xl font-bold font-heading mb-6 leading-tight text-left">
+              Arretez de Debugger.<br />
+              <span className="text-factory-orange">Commencez a Automatiser.</span>
+            </h1>
 
-          {/* Social proof */}
-          <p className="mt-8 text-sm text-gray-500">
-            ✓ 30-day money-back guarantee • ✓ Lifetime updates included
-          </p>
-        </motion.div>
+            {/* Subheading */}
+            <p className="text-lg md:text-xl text-factory-text-secondary mb-8 leading-relaxed text-left max-w-2xl">
+              Templates n8n testes en production qui fonctionnent du premier coup. Economisez <span className="font-semibold text-factory-dark">6-8h de debugging</span> et <span className="font-semibold text-factory-dark">300-400EUR de temps perdu</span> par workflow. ROI prouve de 300-600% sur chaque automatisation deployee.
+            </p>
+
+            {/* Stats Bar */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div>
+                <div className="text-2xl md:text-3xl font-bold font-mono text-factory-orange">6-8h</div>
+                <div className="text-sm text-factory-text-muted">Economisees par workflow</div>
+              </div>
+              <div>
+                <div className="text-2xl md:text-3xl font-bold font-mono text-factory-orange">70%</div>
+                <div className="text-sm text-factory-text-muted">Taux d'echec evite</div>
+              </div>
+              <div>
+                <div className="text-2xl md:text-3xl font-bold font-mono text-factory-orange">300-600%</div>
+                <div className="text-sm text-factory-text-muted">ROI moyen</div>
+              </div>
+            </div>
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              <a
+                href="#email-signup"
+                className="btn-primary inline-block"
+              >
+                Economiser 300EUR des Aujourd'hui
+              </a>
+              <a
+                href="#templates"
+                className="btn-secondary inline-block"
+              >
+                Voir les Templates Prouves
+              </a>
+            </div>
+
+            {/* Trust Pills */}
+            <div className="mt-8 flex flex-wrap gap-4 text-sm text-factory-text-muted">
+              <div className="flex items-center gap-2">
+                <span className="text-factory-green">✓</span>
+                <span>Teste 50+ fois avant publication</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-factory-green">✓</span>
+                <span>ROI calcule par template</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-factory-green">✓</span>
+                <span>Guide video FR inclus</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-factory-green">✓</span>
+                <span>Support 48h max</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Right column - 40% */}
+          <motion.div
+            className="md:col-span-2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <div className="bg-white rounded-xl border-2 border-factory-border p-8 shadow-lg">
+              <div className="mb-4">
+                <div className="inline-block px-3 py-1 bg-factory-orange text-white text-xs font-mono rounded-md mb-4">
+                  PENDANT QUE VOUS LISEZ CECI
+                </div>
+                <h3 className="text-xl font-heading font-bold text-factory-dark mb-2">
+                  Un template gratuit fait planter le workflow de quelqu'un
+                </h3>
+                <p className="text-factory-text-secondary mb-6">
+                  Nos templates sont testes 50+ fois. <span className="font-semibold text-factory-dark">Import. Connect. Deploy.</span> Ca marche.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between py-3 border-b border-factory-border">
+                  <span className="text-factory-text-secondary">Temps gagne:</span>
+                  <span className="font-mono font-semibold text-factory-dark">6-8h par template</span>
+                </div>
+                <div className="flex items-center justify-between py-3 border-b border-factory-border">
+                  <span className="text-factory-text-secondary">Deploiement:</span>
+                  <span className="font-mono font-semibold text-factory-dark">15 min</span>
+                </div>
+                <div className="flex items-center justify-between py-3">
+                  <span className="text-factory-text-secondary">Templates gratuits:</span>
+                  <span className="font-mono font-semibold text-red-600">6h de debugging</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   )

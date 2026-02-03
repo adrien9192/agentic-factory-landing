@@ -3,20 +3,70 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-primary: #1C1C1E;
+    --color-secondary: #E8E4DF;
+    --color-accent: #FF6B35;
+    --color-success: #2D936C;
+    --color-surface: #F7F5F2;
+    --color-text: #1C1C1E;
+    --color-text-muted: #5C5C5E;
+    --color-border: #D1CCC5;
+  }
+
   body {
-    @apply bg-white text-gray-900 antialiased;
+    @apply bg-factory-surface text-factory-text-primary antialiased;
+    font-family: var(--font-source-sans), system-ui, sans-serif;
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-primary-600 to-orange-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-factory-orange to-factory-orange bg-clip-text text-transparent;
   }
 
   .bg-grid-pattern {
+    background-color: #F7F5F2;
     background-image:
-      linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-    background-size: 24px 24px;
+      linear-gradient(135deg, transparent 24%, #D1CCC5 25%, #D1CCC5 26%, transparent 27%),
+      linear-gradient(225deg, transparent 24%, #D1CCC5 25%, #D1CCC5 26%, transparent 27%);
+    background-size: 30px 30px;
+  }
+
+  .card-factory {
+    @apply bg-white border border-factory-border rounded-lg p-6 relative overflow-hidden;
+    @apply hover:border-factory-orange transition-all duration-200;
+  }
+
+  .card-factory-accent {
+    @apply absolute left-0 top-0 bottom-0 w-1 bg-factory-orange;
+    @apply opacity-0 group-hover:opacity-100 transition-opacity duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-factory-orange text-white font-semibold px-8 py-4 rounded-lg text-lg;
+    @apply hover:bg-[#E55A2B] active:bg-[#CC4F26] transition-colors duration-150;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-factory-dark text-factory-dark font-semibold px-8 py-4 rounded-lg text-lg;
+    @apply hover:bg-factory-dark hover:text-white transition-all duration-150;
+  }
+
+  .badge-price {
+    @apply bg-factory-dark text-white font-mono text-sm px-3 py-1.5 rounded-md font-medium;
+  }
+
+  .tag-chip {
+    @apply text-xs font-mono bg-factory-stone text-factory-dark px-2 py-1 rounded;
   }
 }

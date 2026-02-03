@@ -1,29 +1,40 @@
 import type { Metadata } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Source_Sans_3, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-const playfair = Playfair_Display({
+const sourceSans = Source_Sans_3({
   subsets: ['latin'],
-  variable: '--font-playfair',
-  weight: ['400', '700']
+  variable: '--font-source-sans',
+  weight: ['400', '600']
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+  weight: ['500', '700']
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  weight: ['500']
 })
 
 export const metadata: Metadata = {
-  title: 'Agentic Factory | Production-Ready Automation Templates',
-  description: 'Production-ready automation templates for n8n & Make.com. 100% success rate guaranteed. Save 10-15 hours per template.',
-  keywords: ['n8n', 'make.com', 'automation', 'templates', 'workflows', 'no-code'],
+  title: 'Agentic Factory | Templates n8n Qui Marchent du Premier Coup',
+  description: 'Arretez de debugger. Templates n8n testes 50+ fois. 15 min deploiement vs 6-8h debugging. ROI 300-600% prouve. Garantie 30 jours.',
+  keywords: ['n8n', 'make.com', 'automation', 'templates', 'workflows', 'no-code', 'panier abandonne', 'lead gen', 'e-commerce'],
   authors: [{ name: 'Agentic Factory' }],
   openGraph: {
-    title: 'Agentic Factory | Production-Ready Automation Templates',
-    description: 'Templates that actually work. 100% success rate guaranteed.',
+    title: 'Agentic Factory | Templates n8n Qui Marchent du Premier Coup',
+    description: 'Templates testes 50+ fois. 15 min deploiement. ROI 300-600% prouve.',
     type: 'website',
-    locale: 'en_US',
+    locale: 'fr_FR',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Agentic Factory',
-    description: 'Production-ready automation templates for n8n & Make.com',
+    description: 'Templates n8n testes 50+ fois. 15 min deploiement.',
   },
 }
 
@@ -33,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="fr" className={`${sourceSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans">{children}</body>
     </html>
   )
