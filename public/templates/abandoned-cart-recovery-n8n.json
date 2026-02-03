@@ -1,0 +1,446 @@
+{
+  "name": "Abandoned Cart Recovery - E-commerce",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "shopify-cart-abandoned",
+        "method": "POST",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "shopify-abandoned-cart"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "customer_email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "customer_first_name",
+              "value": "={{ $json.billing_address.first_name }}"
+            },
+            {
+              "name": "cart_token",
+              "value": "={{ $json.token }}"
+            },
+            {
+              "name": "cart_url",
+              "value": "={{ $json.abandoned_checkout_url }}"
+            },
+            {
+              "name": "cart_total",
+              "value": "={{ $json.total_price }}"
+            },
+            {
+              "name": "currency",
+              "value": "={{ $json.currency }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Extract Cart Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.customer_email }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "name": "Email Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT email, COUNT(*) as recovery_count, MAX(created_at) as last_sent FROM abandoned_carts WHERE email = '{{ $json.customer_email }}' GROUP BY email",
+        "options": {}
+      },
+      "name": "Check Previous Recoveries",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.recovery_count }}",
+              "operation": "smaller",
+              "value2": 3
+            }
+          ]
+        }
+      },
+      "name": "Not Spammed Before?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "abandoned_carts",
+        "columns": "email, first_name, cart_token, cart_url, total_price, currency, email_sequence_step, created_at",
+        "returnFields": "id",
+        "values": "={{ $json.customer_email }}, ={{ $json.customer_first_name }}, ={{ $json.cart_token }}, ={{ $json.cart_url }}, ={{ $json.cart_total }}, ={{ $json.currency }}, 1, NOW()",
+        "options": {}
+      },
+      "name": "Log to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [1250, 200],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const firstName = $input.item.json.customer_first_name || 'there';\nconst cartUrl = $input.item.json.cart_url;\nconst total = $input.item.json.cart_total;\nconst currency = $input.item.json.currency;\n\nconst subject = `${firstName}, you left something in your cart!`;\n\nconst htmlBody = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }\n    .header h1 { color: white; margin: 0; font-size: 24px; }\n    .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }\n    .cta-button { display: inline-block; background: #f97316; color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }\n    .cta-button:hover { background: #ea580c; }\n    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>🛒 Your Cart is Waiting!</h1>\n    </div>\n    <div class=\"content\">\n      <p>Hi ${firstName},</p>\n      \n      <p>We noticed you left items in your cart worth <strong>${currency} ${total}</strong>.</p>\n      \n      <p>Don't worry, we've saved everything for you! Complete your order now before items sell out:</p>\n      \n      <p style=\"text-align: center;\">\n        <a href=\"${cartUrl}\" class=\"cta-button\">Complete Your Order →</a>\n      </p>\n      \n      <p><strong>Why shop with us?</strong></p>\n      <ul>\n        <li>✅ Free shipping on orders over $50</li>\n        <li>✅ 30-day money-back guarantee</li>\n        <li>✅ 24/7 customer support</li>\n      </ul>\n      \n      <p>Questions? Just reply to this email.</p>\n      \n      <p>Best regards,<br>Your Store Team</p>\n    </div>\n    <div class=\"footer\">\n      <p>This email was sent because you started checkout on our store.</p>\n      <p>Don't want these emails? <a href=\"#\">Unsubscribe</a></p>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn {\n  json: {\n    ...items[0].json,\n    email_subject: subject,\n    email_html: htmlBody\n  }\n};"
+              },
+              "name": "Build Email #1 HTML",
+              "type": "n8n-nodes-base.function",
+              "typeVersion": 1,
+              "position": [1450, 200]
+            },
+            {
+              "parameters": {
+                "fromEmail": "noreply@yourstore.com",
+                "toEmail": "={{ $json.customer_email }}",
+                "subject": "={{ $json.email_subject }}",
+                "emailType": "html",
+                "message": "={{ $json.email_html }}",
+                "options": {
+                  "allowUnauthorizedCerts": true
+                }
+              },
+              "name": "Send Email #1 (1h after)",
+              "type": "n8n-nodes-base.emailSend",
+              "typeVersion": 1,
+              "position": [1650, 200],
+              "credentials": {
+                "smtp": {
+                  "id": "2",
+                  "name": "SMTP Account"
+                }
+              }
+            },
+            {
+              "parameters": {
+                "unit": "hours",
+                "amount": 23
+              },
+              "name": "Wait 23 hours",
+              "type": "n8n-nodes-base.wait",
+              "typeVersion": 1,
+              "position": [1850, 200],
+              "webhookId": "wait-23h"
+            },
+            {
+              "parameters": {
+                "functionCode": "const firstName = $input.item.json.customer_first_name || 'there';\nconst cartUrl = $input.item.json.cart_url;\nconst total = $input.item.json.cart_total;\nconst currency = $input.item.json.currency;\n\nconst subject = `Still interested, ${firstName}? Here's 10% off!`;\n\nconst htmlBody = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }\n    .header h1 { color: white; margin: 0; font-size: 24px; }\n    .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }\n    .discount-box { background: #fef3c7; border: 2px dashed #f59e0b; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }\n    .discount-code { font-size: 24px; font-weight: bold; color: #b45309; letter-spacing: 2px; }\n    .cta-button { display: inline-block; background: #f97316; color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }\n    .cta-button:hover { background: #ea580c; }\n    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>💰 Special Offer Just for You!</h1>\n    </div>\n    <div class=\"content\">\n      <p>Hi ${firstName},</p>\n      \n      <p>Your cart (${currency} ${total}) is still waiting. We don't want you to miss out!</p>\n      \n      <div class=\"discount-box\">\n        <p style=\"margin: 0 0 10px 0; font-size: 18px;\">🎁 Here's <strong>10% OFF</strong> your order:</p>\n        <p class=\"discount-code\">SAVE10</p>\n        <p style=\"margin: 10px 0 0 0; font-size: 12px; color: #78350f;\">Expires in 48 hours</p>\n      </div>\n      \n      <p style=\"text-align: center;\">\n        <a href=\"${cartUrl}\" class=\"cta-button\">Complete Order & Save 10% →</a>\n      </p>\n      \n      <p><strong>What our customers say:</strong></p>\n      <p style=\"font-style: italic; color: #6b7280;\">\"Best purchase I made this year! Quality is amazing.\" - Sarah M.</p>\n      \n      <p>Questions? Reply to this email or call us at 1-800-XXX-XXXX</p>\n      \n      <p>Best regards,<br>Your Store Team</p>\n    </div>\n    <div class=\"footer\">\n      <p>This discount is exclusive to you and expires in 48 hours.</p>\n      <p>Don't want these emails? <a href=\"#\">Unsubscribe</a></p>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn {\n  json: {\n    ...items[0].json,\n    email_subject: subject,\n    email_html: htmlBody\n  }\n};"
+              },
+              "name": "Build Email #2 HTML (with discount)",
+              "type": "n8n-nodes-base.function",
+              "typeVersion": 1,
+              "position": [2050, 200]
+            },
+            {
+              "parameters": {
+                "fromEmail": "noreply@yourstore.com",
+                "toEmail": "={{ $json.customer_email }}",
+                "subject": "={{ $json.email_subject }}",
+                "emailType": "html",
+                "message": "={{ $json.email_html }}",
+                "options": {
+                  "allowUnauthorizedCerts": true
+                }
+              },
+              "name": "Send Email #2 (24h after)",
+              "type": "n8n-nodes-base.emailSend",
+              "typeVersion": 1,
+              "position": [2250, 200],
+              "credentials": {
+                "smtp": {
+                  "id": "2",
+                  "name": "SMTP Account"
+                }
+              }
+            },
+            {
+              "parameters": {
+                "operation": "update",
+                "table": "abandoned_carts",
+                "updateKey": "email",
+                "columns": "email_sequence_step, updated_at",
+                "values": "={{ $json.customer_email }}, 2, NOW()",
+                "options": {}
+              },
+              "name": "Update Database (Step 2)",
+              "type": "n8n-nodes-base.postgres",
+              "typeVersion": 1,
+              "position": [2450, 200],
+              "credentials": {
+                "postgres": {
+                  "id": "1",
+                  "name": "PostgreSQL Account"
+                }
+              }
+            },
+            {
+              "parameters": {
+                "unit": "hours",
+                "amount": 48
+              },
+              "name": "Wait 48 hours",
+              "type": "n8n-nodes-base.wait",
+              "typeVersion": 1,
+              "position": [2650, 200],
+              "webhookId": "wait-48h"
+            },
+            {
+              "parameters": {
+                "functionCode": "const firstName = $input.item.json.customer_first_name || 'there';\nconst cartUrl = $input.item.json.cart_url;\nconst total = $input.item.json.cart_total;\nconst currency = $input.item.json.currency;\n\nconst subject = `Last chance, ${firstName}! Your cart expires soon`;\n\nconst htmlBody = `\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }\n    .header h1 { color: white; margin: 0; font-size: 24px; }\n    .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }\n    .urgency-box { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }\n    .cta-button { display: inline-block; background: #dc2626; color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }\n    .cta-button:hover { background: #b91c1c; }\n    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>⏰ Final Reminder: Cart Expiring Soon</h1>\n    </div>\n    <div class=\"content\">\n      <p>Hi ${firstName},</p>\n      \n      <div class=\"urgency-box\">\n        <p style=\"margin: 0; font-weight: bold; color: #991b1b;\">⚠️ Your cart (${currency} ${total}) will be deleted in 24 hours!</p>\n      </div>\n      \n      <p>This is our final reminder. Items in your cart are selling fast and may not be available later.</p>\n      \n      <p><strong>Your 10% discount code SAVE10 is still valid for the next 24 hours.</strong></p>\n      \n      <p style=\"text-align: center;\">\n        <a href=\"${cartUrl}\" class=\"cta-button\">Complete Order Now →</a>\n      </p>\n      \n      <p><strong>Still unsure?</strong></p>\n      <ul>\n        <li>✅ Free returns within 30 days</li>\n        <li>✅ Secure payment (SSL encrypted)</li>\n        <li>✅ Over 10,000 happy customers</li>\n      </ul>\n      \n      <p>If you have any questions or concerns, reply to this email and we'll help you out!</p>\n      \n      <p>Best regards,<br>Your Store Team</p>\n      \n      <p style=\"font-size: 12px; color: #6b7280; margin-top: 30px;\">P.S. This is our last email about this cart. If you're not interested, no worries—we won't bother you again about this order.</p>\n    </div>\n    <div class=\"footer\">\n      <p>This is the final reminder for your abandoned cart.</p>\n      <p>Don't want these emails? <a href=\"#\">Unsubscribe</a></p>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn {\n  json: {\n    ...items[0].json,\n    email_subject: subject,
+    email_html: htmlBody\n  }\n};"
+              },
+              "name": "Build Email #3 HTML (final reminder)",
+              "type": "n8n-nodes-base.function",
+              "typeVersion": 1,
+              "position": [2850, 200]
+            },
+            {
+              "parameters": {
+                "fromEmail": "noreply@yourstore.com",
+                "toEmail": "={{ $json.customer_email }}",
+                "subject": "={{ $json.email_subject }}",
+                "emailType": "html",
+                "message": "={{ $json.email_html }}",
+                "options": {
+                  "allowUnauthorizedCerts": true
+                }
+              },
+              "name": "Send Email #3 (72h after)",
+              "type": "n8n-nodes-base.emailSend",
+              "typeVersion": 1,
+              "position": [3050, 200],
+              "credentials": {
+                "smtp": {
+                  "id": "2",
+                  "name": "SMTP Account"
+                }
+              }
+            },
+            {
+              "parameters": {
+                "operation": "update",
+                "table": "abandoned_carts",
+                "updateKey": "email",
+                "columns": "email_sequence_step, completed_at, updated_at",
+                "values": "={{ $json.customer_email }}, 3, NOW(), NOW()",
+                "options": {}
+              },
+              "name": "Update Database (Completed)",
+              "type": "n8n-nodes-base.postgres",
+              "typeVersion": 1,
+              "position": [3250, 200],
+              "credentials": {
+                "postgres": {
+                  "id": "1",
+                  "name": "PostgreSQL Account"
+                }
+              }
+            },
+            {
+              "parameters": {
+                "message": ":shopping_cart: Abandoned cart recovery sequence completed for {{ $json.customer_email }} (Total: {{ $json.currency }} {{ $json.cart_total }})",
+                "channel": "#sales",
+                "options": {}
+              },
+              "name": "Slack Notification (Completed)",
+              "type": "n8n-nodes-base.slack",
+              "typeVersion": 1,
+              "position": [3450, 200],
+              "credentials": {
+                "slackApi": {
+                  "id": "3",
+                  "name": "Slack Account"
+                }
+              }
+            },
+            {
+              "parameters": {},
+              "name": "No Email - Stop",
+              "type": "n8n-nodes-base.noOp",
+              "typeVersion": 1,
+              "position": [650, 500]
+            },
+            {
+              "parameters": {},
+              "name": "Already Recovered 3+ Times - Stop",
+              "type": "n8n-nodes-base.noOp",
+              "typeVersion": 1,
+              "position": [1050, 400]
+            }
+          ],
+          "connections": {
+            "Webhook Trigger": {
+              "main": [[{
+                "node": "Extract Cart Data",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Extract Cart Data": {
+              "main": [[{
+                "node": "Email Valid?",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Email Valid?": {
+              "main": [
+                [{
+                  "node": "Check Previous Recoveries",
+                  "type": "main",
+                  "index": 0
+                }],
+                [{
+                  "node": "No Email - Stop",
+                  "type": "main",
+                  "index": 0
+                }]
+              ]
+            },
+            "Check Previous Recoveries": {
+              "main": [[{
+                "node": "Not Spammed Before?",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Not Spammed Before?": {
+              "main": [
+                [{
+                  "node": "Log to Database",
+                  "type": "main",
+                  "index": 0
+                }],
+                [{
+                  "node": "Already Recovered 3+ Times - Stop",
+                  "type": "main",
+                  "index": 0
+                }]
+              ]
+            },
+            "Log to Database": {
+              "main": [[{
+                "node": "Build Email #1 HTML",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Build Email #1 HTML": {
+              "main": [[{
+                "node": "Send Email #1 (1h after)",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Send Email #1 (1h after)": {
+              "main": [[{
+                "node": "Wait 23 hours",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Wait 23 hours": {
+              "main": [[{
+                "node": "Build Email #2 HTML (with discount)",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Build Email #2 HTML (with discount)": {
+              "main": [[{
+                "node": "Send Email #2 (24h after)",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Send Email #2 (24h after)": {
+              "main": [[{
+                "node": "Update Database (Step 2)",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Update Database (Step 2)": {
+              "main": [[{
+                "node": "Wait 48 hours",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Wait 48 hours": {
+              "main": [[{
+                "node": "Build Email #3 HTML (final reminder)",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Build Email #3 HTML (final reminder)": {
+              "main": [[{
+                "node": "Send Email #3 (72h after)",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Send Email #3 (72h after)": {
+              "main": [[{
+                "node": "Update Database (Completed)",
+                "type": "main",
+                "index": 0
+              }]]
+            },
+            "Update Database (Completed)": {
+              "main": [[{
+                "node": "Slack Notification (Completed)",
+                "type": "main",
+                "index": 0
+              }]]
+            }
+          },
+          "settings": {},
+          "staticData": null,
+          "tags": ["e-commerce", "shopify", "abandoned-cart", "email-automation"],
+          "meta": {
+            "instanceId": "n8n-production"
+          }
+        }
