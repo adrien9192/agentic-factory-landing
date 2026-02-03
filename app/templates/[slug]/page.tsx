@@ -25,6 +25,14 @@ interface WorkflowData {
     complexity: string
     nodes_count: number
     tags_fr: string[]
+    sections?: {
+      why?: string
+      description?: string
+      installation?: string
+      usage?: string
+      tips?: string
+      learning?: string
+    }
   }
   workflow_json: any
 }
@@ -130,53 +138,133 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
         </div>
       </section>
 
-      {/* Description Section */}
-      <section className="py-12">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="bg-white rounded-lg border border-factory-border p-8">
-            <h2 className="text-2xl font-bold mb-6">Description Complète</h2>
-            <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
-              {metadata.description_full_fr || metadata.description_short_fr}
+      {/* Why Section */}
+      {metadata.sections?.why && (
+        <section className="py-12">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="bg-gradient-to-br from-factory-orange/5 to-factory-orange/10 rounded-lg border border-factory-orange/20 p-8">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <span className="text-3xl">🎯</span>
+                Pourquoi ce workflow va vous sauver la vie
+              </h2>
+              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
+                {metadata.sections.why}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Description Section */}
+      {metadata.sections?.description && (
+        <section className="py-12 bg-white">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="bg-factory-surface rounded-lg border border-factory-border p-8">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <span className="text-3xl">📋</span>
+                Comment ça marche
+              </h2>
+              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
+                {metadata.sections.description}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Usage Section */}
+      {metadata.sections?.usage && (
+        <section className="py-12">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="bg-white rounded-lg border border-factory-border p-8">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <span className="text-3xl">🚀</span>
+                Cas d'utilisation concrets
+              </h2>
+              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
+                {metadata.sections.usage}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pro Tips Section */}
+      {metadata.sections?.tips && (
+        <section className="py-12 bg-factory-dark text-white">
+          <div className="max-w-5xl mx-auto px-6">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <span className="text-3xl">💡</span>
+              Conseils de pro
+            </h2>
+            <div className="prose prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
+              {metadata.sections.tips}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Learning Section */}
+      {metadata.sections?.learning && (
+        <section className="py-12">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="bg-gradient-to-br from-factory-orange/5 to-factory-surface rounded-lg border border-factory-border p-8">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <span className="text-3xl">🎓</span>
+                Ce que vous allez apprendre
+              </h2>
+              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
+                {metadata.sections.learning}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Installation Section */}
       <section className="py-12 bg-white">
         <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl font-bold mb-6">Installation</h2>
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+            <span className="text-3xl">🛠️</span>
+            Installation
+          </h2>
           <div className="bg-factory-surface rounded-lg border border-factory-border p-8">
-            <ol className="space-y-4">
-              <li className="flex gap-4">
-                <span className="flex-shrink-0 w-8 h-8 bg-factory-orange text-white rounded-full flex items-center justify-center font-bold">1</span>
-                <div>
-                  <h3 className="font-semibold mb-1">Télécharger le fichier JSON</h3>
-                  <p className="text-factory-text-secondary">Cliquez sur le bouton de téléchargement ci-dessus.</p>
-                </div>
-              </li>
-              <li className="flex gap-4">
-                <span className="flex-shrink-0 w-8 h-8 bg-factory-orange text-white rounded-full flex items-center justify-center font-bold">2</span>
-                <div>
-                  <h3 className="font-semibold mb-1">Importer dans n8n</h3>
-                  <p className="text-factory-text-secondary">Ouvrez n8n → Workflows → Import from File → Sélectionnez le JSON.</p>
-                </div>
-              </li>
-              <li className="flex gap-4">
-                <span className="flex-shrink-0 w-8 h-8 bg-factory-orange text-white rounded-full flex items-center justify-center font-bold">3</span>
-                <div>
-                  <h3 className="font-semibold mb-1">Configurer les credentials</h3>
-                  <p className="text-factory-text-secondary">Connectez vos comptes (Gmail, Google Sheets, APIs, etc.) dans chaque nœud.</p>
-                </div>
-              </li>
-              <li className="flex gap-4">
-                <span className="flex-shrink-0 w-8 h-8 bg-factory-orange text-white rounded-full flex items-center justify-center font-bold">4</span>
-                <div>
-                  <h3 className="font-semibold mb-1">Tester & Activer</h3>
-                  <p className="text-factory-text-secondary">Exécutez un test avec "Execute Workflow", puis activez le workflow.</p>
-                </div>
-              </li>
-            </ol>
+            {metadata.sections?.installation ? (
+              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
+                {metadata.sections.installation}
+              </div>
+            ) : (
+              <ol className="space-y-4">
+                <li className="flex gap-4">
+                  <span className="flex-shrink-0 w-8 h-8 bg-factory-orange text-white rounded-full flex items-center justify-center font-bold">1</span>
+                  <div>
+                    <h3 className="font-semibold mb-1">Télécharger le fichier JSON</h3>
+                    <p className="text-factory-text-secondary">Cliquez sur le bouton de téléchargement ci-dessus.</p>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <span className="flex-shrink-0 w-8 h-8 bg-factory-orange text-white rounded-full flex items-center justify-center font-bold">2</span>
+                  <div>
+                    <h3 className="font-semibold mb-1">Importer dans n8n</h3>
+                    <p className="text-factory-text-secondary">Ouvrez n8n → Workflows → Import from File → Sélectionnez le JSON.</p>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <span className="flex-shrink-0 w-8 h-8 bg-factory-orange text-white rounded-full flex items-center justify-center font-bold">3</span>
+                  <div>
+                    <h3 className="font-semibold mb-1">Configurer les credentials</h3>
+                    <p className="text-factory-text-secondary">Connectez vos comptes (Gmail, Google Sheets, APIs, etc.) dans chaque nœud.</p>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <span className="flex-shrink-0 w-8 h-8 bg-factory-orange text-white rounded-full flex items-center justify-center font-bold">4</span>
+                  <div>
+                    <h3 className="font-semibold mb-1">Tester & Activer</h3>
+                    <p className="text-factory-text-secondary">Exécutez un test avec "Execute Workflow", puis activez le workflow.</p>
+                  </div>
+                </li>
+              </ol>
+            )}
           </div>
         </div>
       </section>
