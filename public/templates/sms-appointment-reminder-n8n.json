@@ -1,356 +1,41 @@
 {
-  "name": "SMS Appointment Reminder - Agentic Factory Template #002",
-  "nodes": [
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 9 * * *"
-            }
-          ]
-        }
-      },
-      "id": "schedule-trigger",
-      "name": "Daily 9am Check",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [250, 300]
-    },
-    {
-      "parameters": {
-        "authentication": "oAuth2",
-        "resource": "event",
-        "operation": "getAll",
-        "calendar": {
-          "__rl": true,
-          "value": "primary",
-          "mode": "list",
-          "cachedResultName": "Primary"
-        },
-        "returnAll": true,
-        "options": {
-          "timeMin": "={{ $now.plus({ hours: 24 }).toISO() }}",
-          "timeMax": "={{ $now.plus({ hours: 48 }).toISO() }}",
-          "maxResults": 100
-        }
-      },
-      "id": "google-calendar-fetch",
-      "name": "Get Tomorrow's Appointments",
-      "type": "n8n-nodes-base.googleCalendar",
-      "typeVersion": 1,
-      "position": [470, 300],
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "1",
-          "name": "Google Calendar Account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "batchSize": 1,
-        "options": {}
-      },
-      "id": "split-batches",
-      "name": "Process Each Appointment",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [690, 300]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Extract appointment data from Google Calendar event\nconst event = $input.item.json;\n\n// Extract customer name (remove common prefixes)\nlet customerName = event.summary || 'Client';\ncustomerName = customerName.replace(/^(Appointment with|RDV avec|Meeting with)\\s*/i, '');\n\n// Extract phone from description or attendees\nlet phone = '';\n\n// Try to find phone in description\nif (event.description) {\n  const phoneMatch = event.description.match(/(?:Phone|Tel|Téléphone|Mobile)\\s*:?\\s*([\\+\\d\\s\\(\\)\\-]{8,20})/i);\n  if (phoneMatch) {\n    phone = phoneMatch[1].trim();\n  }\n}\n\n// If no phone in description, try attendees email (fallback)\nif (!phone && event.attendees && event.attendees.length > 0) {\n  // Store email as fallback\n  phone = event.attendees[0].email || '';\n}\n\n// Extract appointment time\nconst appointmentTime = event.start.dateTime || event.start.date;\n\n// Extract service/location\nconst service = event.location || 'votre rendez-vous';\n\nreturn {\n  customer_name: customerName,\n  appointment_time: appointmentTime,\n  phone: phone,\n  service: service,\n  event_id: event.id,\n  original_summary: event.summary\n};"
-      },
-      "id": "extract-data",
-      "name": "Extract Appointment Data",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [910, 300]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "phone-exists",
-              "leftValue": "={{ $json.phone }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "if-phone-exists",
-      "name": "Phone Number Exists?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [1130, 300]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Format phone number to international format\nlet phone = $json.phone || '';\n\n// If it's an email (fallback), skip phone formatting\nif (phone.includes('@')) {\n  return { ...items[0].json, phone: '', phone_valid: false };\n}\n\n// Remove all spaces, dashes, parentheses\nphone = phone.replace(/[\\s\\-\\(\\)]/g, '');\n\n// Handle French phone numbers\nif (phone.startsWith('0') && phone.length === 10) {\n  // French mobile: 06/07 → +336/+337\n  phone = '+33' + phone.slice(1);\n} else if (phone.startsWith('33') && !phone.startsWith('+')) {\n  // Add + prefix\n  phone = '+' + phone;\n} else if (!phone.startsWith('+')) {\n  // Default to France if no country code\n  phone = '+33' + phone;\n}\n\n// Validate phone number (basic check)\nconst isValid = /^\\+\\d{10,15}$/.test(phone);\n\nreturn {\n  ...items[0].json,\n  phone: phone,\n  phone_valid: isValid\n};"
-      },
-      "id": "format-phone",
-      "name": "Format Phone Number",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1350, 200]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Build personalized SMS message\nconst { customer_name, appointment_time, service, phone } = $json;\n\n// Parse appointment time\nconst date = new Date(appointment_time);\nconst timeStr = date.toLocaleTimeString('fr-FR', { \n  hour: '2-digit', \n  minute: '2-digit',\n  hour12: false \n});\nconst dateStr = date.toLocaleDateString('fr-FR', {\n  day: 'numeric',\n  month: 'long'\n});\n\n// Determine language (basic detection)\nconst isFrench = service.toLowerCase().includes('rdv') || \n                 customer_name.match(/[éèêëàâäôö]/i);\n\n// Build SMS message (max 160 chars for 1 SMS segment)\nlet message;\n\nif (isFrench) {\n  message = `Bonjour ${customer_name}, rappel pour ${service} demain à ${timeStr}. Confirmez en répondant OUI. Merci!`;\n} else {\n  message = `Hi ${customer_name}, reminder: ${service} tomorrow at ${timeStr}. Reply YES to confirm. Thanks!`;\n}\n\n// Truncate if too long (keep under 160 chars)\nif (message.length > 160) {\n  message = message.slice(0, 157) + '...';\n}\n\nreturn {\n  ...items[0].json,\n  sms_message: message,\n  appointment_date_formatted: dateStr,\n  appointment_time_formatted: timeStr\n};"
-      },
-      "id": "build-sms",
-      "name": "Build SMS Message",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1570, 200]
-    },
-    {
-      "parameters": {
-        "fromPhoneNumber": "+33757XX00XX",
-        "toPhoneNumber": "={{ $json.phone }}",
-        "message": "={{ $json.sms_message }}",
-        "options": {}
-      },
-      "id": "twilio-send-sms",
-      "name": "Send SMS via Twilio",
-      "type": "n8n-nodes-base.twilio",
-      "typeVersion": 1,
-      "position": [1790, 200],
-      "credentials": {
-        "twilioApi": {
-          "id": "2",
-          "name": "Twilio Account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "appendOrUpdate",
-        "documentId": {
-          "__rl": true,
-          "value": "YOUR_SPREADSHEET_ID",
-          "mode": "list",
-          "cachedResultName": "SMS Reminder Log"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Sheet1",
-          "mode": "list",
-          "cachedResultName": "Sheet1"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Date": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
-            "Customer": "={{ $json.customer_name }}",
-            "Phone": "={{ $json.phone }}",
-            "Service": "={{ $json.service }}",
-            "Appointment Time": "={{ $json.appointment_time_formatted }}",
-            "SMS Message": "={{ $json.sms_message }}",
-            "Status": "={{ $json.status || 'sent' }}",
-            "Twilio SID": "={{ $json.sid || '' }}"
-          },
-          "matchingColumns": [],
-          "schema": []
-        },
-        "options": {}
-      },
-      "id": "log-to-sheets",
-      "name": "Log to Google Sheets",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [2010, 200],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "3",
-          "name": "Google Sheets Account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "mode": "combine",
-        "combinationMode": "mergeByPosition",
-        "options": {}
-      },
-      "id": "merge-success",
-      "name": "Merge Results",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [2230, 200]
-    },
-    {
-      "parameters": {},
-      "id": "no-data",
-      "name": "No Phone Number",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [1350, 400],
-      "notes": "Skip appointments without phone numbers"
-    },
-    {
-      "parameters": {
-        "content": "## SMS Appointment Reminder - Template #002\n\n**Agentic Factory Production Template**\n\n### How it works:\n1. Runs daily at 9:00 AM\n2. Fetches tomorrow's appointments from Google Calendar\n3. Extracts customer name, phone, service from event\n4. Formats phone to international format (+33...)\n5. Builds personalized SMS message (FR/EN)\n6. Sends SMS via Twilio\n7. Logs sent SMS to Google Sheets\n\n### Setup Required:\n- Google Calendar OAuth2 credentials\n- Twilio API credentials (Account SID + Auth Token)\n- Google Sheets OAuth2 credentials\n- Update Twilio phone number (node #8)\n- Update Google Sheets ID (node #9)\n\n### Phone Number Format:\nAdd phone in event description:\n```\nPhone: +33612345678\nOR\nTel: 0612345678\n```\n\n### ROI:\n- Reduces no-shows from 20% to 8%\n- For 100 appts/month: saves 12 × €100 = €1,200\n- Cost: 100 SMS × €0.08 = €8\n- ROI: 15,000%\n\n**Build Time:** 10 minutes\n**Price:** €39",
-        "height": 464.79076827879315,
-        "width": 449.3837884660729,
-        "color": 4
-      },
-      "id": "sticky-note",
-      "name": "Sticky Note",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [240, 460]
-    }
-  ],
-  "connections": {
-    "Daily 9am Check": {
-      "main": [
-        [
-          {
-            "node": "Get Tomorrow's Appointments",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Tomorrow's Appointments": {
-      "main": [
-        [
-          {
-            "node": "Process Each Appointment",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Process Each Appointment": {
-      "main": [
-        [
-          {
-            "node": "Extract Appointment Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract Appointment Data": {
-      "main": [
-        [
-          {
-            "node": "Phone Number Exists?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Phone Number Exists?": {
-      "main": [
-        [
-          {
-            "node": "Format Phone Number",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "No Phone Number",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Phone Number": {
-      "main": [
-        [
-          {
-            "node": "Build SMS Message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build SMS Message": {
-      "main": [
-        [
-          {
-            "node": "Send SMS via Twilio",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Send SMS via Twilio": {
-      "main": [
-        [
-          {
-            "node": "Log to Google Sheets",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Log to Google Sheets": {
-      "main": [
-        [
-          {
-            "node": "Merge Results",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+  "metadata": {
+    "id": "002",
+    "slug": "sms-appointment-reminder-n8n",
+    "title_en": "SMS Appointment Reminder - Services",
+    "title_fr": "Rappels SMS de rendez-vous - Services",
+    "description_short_en": "Reduce no-shows by 70% with automated SMS reminders sent 24h before appointments from Google Calendar.",
+    "description_short_fr": "Réduisez les absences de 70% avec des rappels SMS automatiques envoyés 24h avant les rendez-vous depuis Google Calendar.",
+    "description_full_en": "Daily workflow that scans Google Calendar for tomorrow's appointments, extracts customer phone numbers, validates them, and sends personalized SMS reminders via Twilio.",
+    "description_full_fr": "### Le circuit complet\n\n**1. Déclenchement quotidien (9h du matin)**\nChaque jour à 9h, le workflow se lance automatiquement :\n- Schedule Trigger déclenche l'exécution\n- Commence la vérification des RDV\n\n**2. Scan du Google Calendar**\nRécupère tous les RDV des prochaines 24-48h :\n- Connexion OAuth2 à Google Calendar\n- Filtre : événements entre demain 0h et après-demain 0h\n- Extrait : titre, heure début/fin, description\n\n**3. Extraction du numéro de téléphone**\nPour chaque RDV, cherche le téléphone du client :\n- D'abord dans la description de l'événement (format : \"Tél: 06...\")\n- Sinon, dans le nom de l'invité\n- Valide le format : +33 ou 06/07\n\n**4. Validation du numéro**\nVérifie que le numéro est valide :\n- Format français : commence par 06 ou 07 ou +336/7\n- Longueur correcte : 10 chiffres\n- Si invalide → skip cet événement\n\n**5. Formatage du SMS**\nGénère le message personnalisé :\n```\nBonjour [Nom],\n\nRappel : RDV demain [date] à [heure] avec [praticien/entreprise].\n\nAdresse : [ton adresse]\n\nEn cas d'empêchement, merci de prévenir au [ton tel].\n\nÀ demain !\n```\n\n**6. Envoi du SMS (Twilio)**\nEnvoie via l'API Twilio :\n- Numéro expéditeur : ton numéro Twilio\n- Destinataire : client\n- Message : texte formaté\n\n**7. Logging (optionnel)**\nEnregistre dans Google Sheets :\n- Client, numéro, date RDV, heure envoi SMS, statut",
+    "category": "Services",
+    "complexity": "Beginner",
+    "tags_en": [
+      "sms",
+      "calendar",
+      "appointments",
+      "reminders",
+      "twilio"
+    ],
+    "tags_fr": [
+      "sms",
+      "calendrier",
+      "rendez-vous",
+      "rappels",
+      "twilio"
+    ],
+    "author": "Agentic Factory",
+    "date": "2024",
+    "url_original": "",
+    "nodes_count": 8,
+    "sections": {
+      "why": "Tu es coiffeur, dentiste, coach, kiné... **30% de tes clients oublient leur RDV.**\n\n**Le problème :**\n- Tu appelles manuellement la veille → 2h/jour perdues\n- Les clients ne répondent pas au téléphone\n- Les no-shows te coûtent €50-200/RDV raté\n- Ton agenda a des trous → perte de CA\n\n**Ce workflow :**\nChaque matin à 9h, n8n scanne ton Google Calendar, trouve les RDV du lendemain, et envoie automatiquement un SMS de rappel à chaque client 24h avant. **Réduit les no-shows de 70%.**\n\n**Ce que tu gagnes :**\n- **70% de no-shows en moins** (de 30% à 9%)\n- **Zéro appel manuel** : tout est automatique\n- **SMS pro** : personnalisés avec nom, heure, adresse\n- **Coût ridicule** : €0.05/SMS vs €10 de RDV raté\n\n**Pour qui ?**\n- Professions libérales (médecins, dentistes, avocats...)\n- Services à la personne (coiffeurs, esthéticiennes, coaches...)\n- Garages automobiles\n- Studios de yoga/fitness",
+      "description": "### Le circuit complet\n\n**1. Déclenchement quotidien (9h du matin)**\nChaque jour à 9h, le workflow se lance automatiquement :\n- Schedule Trigger déclenche l'exécution\n- Commence la vérification des RDV\n\n**2. Scan du Google Calendar**\nRécupère tous les RDV des prochaines 24-48h :\n- Connexion OAuth2 à Google Calendar\n- Filtre : événements entre demain 0h et après-demain 0h\n- Extrait : titre, heure début/fin, description\n\n**3. Extraction du numéro de téléphone**\nPour chaque RDV, cherche le téléphone du client :\n- D'abord dans la description de l'événement (format : \"Tél: 06...\")\n- Sinon, dans le nom de l'invité\n- Valide le format : +33 ou 06/07\n\n**4. Validation du numéro**\nVérifie que le numéro est valide :\n- Format français : commence par 06 ou 07 ou +336/7\n- Longueur correcte : 10 chiffres\n- Si invalide → skip cet événement\n\n**5. Formatage du SMS**\nGénère le message personnalisé :\n```\nBonjour [Nom],\n\nRappel : RDV demain [date] à [heure] avec [praticien/entreprise].\n\nAdresse : [ton adresse]\n\nEn cas d'empêchement, merci de prévenir au [ton tel].\n\nÀ demain !\n```\n\n**6. Envoi du SMS (Twilio)**\nEnvoie via l'API Twilio :\n- Numéro expéditeur : ton numéro Twilio\n- Destinataire : client\n- Message : texte formaté\n\n**7. Logging (optionnel)**\nEnregistre dans Google Sheets :\n- Client, numéro, date RDV, heure envoi SMS, statut",
+      "installation": "### Prérequis\n- [ ] n8n installé\n- [ ] Google Calendar avec tes RDV\n- [ ] Compte Twilio ($20 de crédit gratuit)\n- [ ] Numéro Twilio français (+33)",
+      "usage": "### Scénario 1 : Cabinet dentaire (20 RDV/jour)\n**Situation :** 20 patients/jour. 30% de no-shows = 6 RDV ratés = €600/jour perdus.\n\n**Setup :**\n1. Configure le workflow avec Twilio\n2. Modifie le template SMS :\n```\nBonjour {{ nom }},\n\nRappel : RDV chez Dr. Martin demain à {{ heure }}.\n\nClinique Dentaire du Centre\n15 Av. de la République, 75011 Paris\nTél: 01 23 45 67 89\n\nMerci de prévenir en cas d'empêchement.\n```\n\n**Résultat automatique :**\n- 20 SMS envoyés automatiquement chaque soir\n- No-shows passent de 30% à 9% → 16 RDV honorés vs 14 avant\n- Gain : €200/jour = €4,000/mois\n- Coût SMS : 20 × €0.05 = €1/jour = €30/mois\n\n**ROI : €4,000 gain - €30 coût = €3,970/mois net**",
+      "tips": "**Format du numéro dans Calendar**\nStandardise le format des RDV :\n- Titre : \"Marie Dupont - Coupe\"\n- Description : \"Tél: 06 12 34 56 78\"\n\nOu utilise un champ personnalisé Google Calendar.\n\n**Timing optimal**\n- Services médicaux : 24h avant (sérieux, anticipe annulation)\n- Beauté/bien-être : 24h avant\n- Fitness/sport : 12h avant (plus spontané)\n- High-ticket (avocat, etc.) : 48h avant\n\n**Gestion des annulations**\nAjoute dans le SMS :\n```\nPour annuler, répondez ANNULER\n```\n\nPuis crée un webhook Twilio qui :\n- Reçoit la réponse \"ANNULER\"\n- Supprime l'événement dans Google Calendar\n- Te notifie sur Slack/Email\n\n**Multilingue**\nSi clientèle internationale :\n- Ajoute un champ \"Langue: FR/EN\" dans Calendar\n- Node IF : si EN → template anglais, si FR → template français\n\n**Coût Twilio**\n- SMS France → France : €0.05/SMS\n- Si 100 RDV/mois : €5/mois\n- ROI : 1 seul no-show évité = rentabilisé\n\n**Conformité RGPD**\n- Ajoute en fin de SMS : \"SMS auto. STOP au 06...\"\n- Stocke le consentement clients (opt-in lors de la prise de RDV)",
+      "learning": "✅ Automatiser des tâches récurrentes avec Schedule Trigger\n✅ Lire des données depuis Google Calendar API\n✅ Extraire des numéros de téléphone avec regex\n✅ Envoyer des SMS via Twilio API\n✅ Formater des messages dynamiques\n✅ Gérer des conditions (numéro valide/invalide)\n✅ Logger des actions pour suivi\n\n**Temps d'installation :** 20 minutes\n**Niveau de difficulté :** Débutant\n**ROI :** 70% de no-shows évités\n\n🔥 **Prêt à automatiser tes rappels ?** Importe le workflow et connecte ton Calendar."
     }
   },
-  "pinData": {},
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "staticData": null,
-  "tags": [
-    {
-      "createdAt": "2026-02-02T22:20:00.000Z",
-      "updatedAt": "2026-02-02T22:20:00.000Z",
-      "id": "1",
-      "name": "Agentic Factory"
-    },
-    {
-      "createdAt": "2026-02-02T22:20:00.000Z",
-      "updatedAt": "2026-02-02T22:20:00.000Z",
-      "id": "2",
-      "name": "Template #002"
-    },
-    {
-      "createdAt": "2026-02-02T22:20:00.000Z",
-      "updatedAt": "2026-02-02T22:20:00.000Z",
-      "id": "3",
-      "name": "SMS Reminder"
-    }
-  ],
-  "triggerCount": 1,
-  "updatedAt": "2026-02-02T22:20:00.000Z",
-  "versionId": "1"
+  "workflow_json": null
 }

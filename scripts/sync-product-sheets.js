@@ -14,7 +14,11 @@ const SLUG_MAPPING = {
   'videos-nanobanana-veo3-blotato.md': 'gnrez-des-vidos-virales-ia-avec-nanobanana-et-veo3-partages-sur-les-rseaux-sociaux-via-blotato',
   'videos-tiktok-avatars-ai.md': 'crez-automatiquement-des-vidos-tiktok-avec-les-avatars-veedio-ai-elevenlabs-et-gpt-4',
   'videos-tiktok-sora-2.md': 'gnrez-des-vidos-ia-amusantes-avec-sora-2-et-publiez-automatiquement-sur-tiktok',
-  'videos-virales-veo3-tiktok.md': 'gnrez-des-vidos-virales-ia-avec-veo-3-et-tlchargez-les-sur-tiktok'
+  'videos-virales-veo3-tiktok.md': 'gnrez-des-vidos-virales-ia-avec-veo-3-et-tlchargez-les-sur-tiktok',
+  // Legacy workflows (3 new French product sheets)
+  'abandoned-cart-recovery-n8n.md': 'abandoned-cart-recovery-n8n',
+  'sms-appointment-reminder-n8n.md': 'sms-appointment-reminder-n8n',
+  'lead-capture-nurture-n8n.md': 'lead-capture-nurture-n8n'
 };
 
 // Parse markdown to extract sections
@@ -25,9 +29,15 @@ function parseMarkdown(content) {
   const titleMatch = content.match(/^#\s+(.+)$/m);
   sections.title = titleMatch ? titleMatch[1] : '';
 
-  // Extract "Pourquoi" section
-  const whyMatch = content.match(/##\s+🎯\s+Pourquoi.*?\n\n([\s\S]*?)(?=\n##|$)/);
+  // Extract "Pourquoi" section (flexible: matches any heading starting with 🎯)
+  const whyMatch = content.match(/##\s+🎯.*?\n\n([\s\S]*?)(?=\n##|$)/);
   sections.why = whyMatch ? whyMatch[1].trim() : '';
+
+  // Fallback: try 🚨 emoji as well (some files use this)
+  if (!sections.why) {
+    const altWhyMatch = content.match(/##\s+🚨.*?\n\n([\s\S]*?)(?=\n##|$)/);
+    sections.why = altWhyMatch ? altWhyMatch[1].trim() : '';
+  }
 
   // Extract "Description" section
   const descMatch = content.match(/##\s+📋\s+Description.*?\n\n([\s\S]*?)(?=\n##|$)/);
@@ -46,8 +56,15 @@ function parseMarkdown(content) {
   sections.tips = tipsMatch ? tipsMatch[1].trim() : '';
 
   // Extract "Ce que tu vas apprendre" section
-  const learningMatch = content.match(/##\s+🎓\s+Ce que tu vas apprendre.*?\n\n([\s\S]*?)(?=\n##|$)/);
+  const learningMatch = content.match(/##\s+🎓.*?\n\n([\s\S]*?)(?=\n##|$)/);
   sections.learning = learningMatch ? learningMatch[1].trim() : '';
+
+  // Fallback: try to extract ROI section if learning section doesn't exist
+  if (!sections.learning) {
+    // Some files have "ROI" or "ROI attendu" sections instead
+    const roiMatch = content.match(/##\s+(?:🎯|⚡)\s+ROI.*?\n\n([\s\S]*?)(?=\n##|$)/);
+    sections.learning = roiMatch ? roiMatch[1].trim() : '';
+  }
 
   return sections;
 }
