@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getTemplateBySlug, templates } from '@/lib/templates'
+import ReviewsSection from '@/components/ReviewsSection'
 import Footer from '@/components/Footer'
 
 export async function generateStaticParams() {
@@ -145,6 +146,9 @@ export default function TemplatePage({ params }: { params: { slug: string } }) {
             </div>
           </div>
         </section>
+
+        {/* Reviews Section */}
+        <ReviewsSection templateId={template.id} templateName={template.name} />
 
         {/* CTA */}
         <section className="py-24 bg-factory-surface">
