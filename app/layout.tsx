@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Source_Sans_3, Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
+import CookieBanner from '@/components/CookieBanner'
 
 const sourceSans = Source_Sans_3({
   subsets: ['latin'],
@@ -45,7 +46,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" className={`${sourceSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        {children}
+        <CookieBanner />
+      </body>
     </html>
   )
 }

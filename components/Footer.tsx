@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="bg-factory-surface-dark text-gray-300 py-12 border-t border-factory-border">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
+        <div className="grid md:grid-cols-5 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2">
             <div className="text-2xl font-bold font-heading text-white mb-2">
@@ -46,17 +46,32 @@ export default function Footer() {
               <li><a href="#" className="text-gray-400 hover:text-factory-orange transition-colors">Affiliates</a></li>
             </ul>
           </div>
+
+          {/* Legal */}
+          <div>
+            <div className="font-semibold text-white mb-3">Légal</div>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/legal/cgv" className="text-gray-400 hover:text-factory-orange transition-colors">CGV</Link></li>
+              <li><Link href="/legal/privacy" className="text-gray-400 hover:text-factory-orange transition-colors">Confidentialité</Link></li>
+              <li><Link href="/legal/terms" className="text-gray-400 hover:text-factory-orange transition-colors">Conditions</Link></li>
+              <li><Link href="/legal/cookies" className="text-gray-400 hover:text-factory-orange transition-colors">Cookies</Link></li>
+              <li><Link href="/legal/mentions" className="text-gray-400 hover:text-factory-orange transition-colors">Mentions Légales</Link></li>
+              <li><Link href="/legal/refund" className="text-gray-400 hover:text-factory-orange transition-colors">Remboursement</Link></li>
+            </ul>
+          </div>
         </div>
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-factory-border flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
           <div>
-            © 2026 Agentic Factory by DigitalAine SAS. Tous droits reserves.
+            © 2026 Agentic Factory by DigitalAine SAS. Tous droits réservés.
           </div>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-factory-orange transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-factory-orange transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-factory-orange transition-colors">Refund Policy</a>
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+            <Link href="/legal/privacy" className="hover:text-factory-orange transition-colors">Confidentialité</Link>
+            <Link href="/legal/terms" className="hover:text-factory-orange transition-colors">Conditions</Link>
+            <Link href="/legal/cgv" className="hover:text-factory-orange transition-colors">CGV</Link>
+            <Link href="/legal/refund" className="hover:text-factory-orange transition-colors">Remboursement</Link>
+            <Link href="/legal/mentions" className="hover:text-factory-orange transition-colors">Mentions Légales</Link>
           </div>
         </div>
       </div>

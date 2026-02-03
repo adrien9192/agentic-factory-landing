@@ -11,6 +11,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }))
 
+  const legalPages = [
+    'cgv',
+    'privacy',
+    'terms',
+    'cookies',
+    'mentions',
+    'refund',
+  ].map((page) => ({
+    url: `${baseUrl}/legal/${page}`,
+    lastModified: new Date(),
+    changeFrequency: 'yearly' as const,
+    priority: 0.5,
+  }))
+
   return [
     {
       url: baseUrl,
@@ -31,5 +45,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     ...templateUrls,
+    ...legalPages,
   ]
 }
