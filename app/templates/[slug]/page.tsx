@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import fs from 'fs'
 import path from 'path'
+import MarkdownRenderer from '@/components/MarkdownRenderer'
 
 // Category-based image mapping (Unsplash)
 const categoryImages: Record<string, string> = {
@@ -147,9 +148,7 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
                 <span className="text-3xl">🎯</span>
                 Pourquoi ce workflow va vous sauver la vie
               </h2>
-              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
-                {metadata.sections.why}
-              </div>
+              <MarkdownRenderer content={metadata.sections.why} />
             </div>
           </div>
         </section>
@@ -164,9 +163,7 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
                 <span className="text-3xl">📋</span>
                 Comment ça marche
               </h2>
-              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
-                {metadata.sections.description}
-              </div>
+              <MarkdownRenderer content={metadata.sections.description} />
             </div>
           </div>
         </section>
@@ -181,9 +178,7 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
                 <span className="text-3xl">🚀</span>
                 Cas d'utilisation concrets
               </h2>
-              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
-                {metadata.sections.usage}
-              </div>
+              <MarkdownRenderer content={metadata.sections.usage} />
             </div>
           </div>
         </section>
@@ -197,8 +192,8 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
               <span className="text-3xl">💡</span>
               Conseils de pro
             </h2>
-            <div className="prose prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
-              {metadata.sections.tips}
+            <div className="tips-section">
+              <MarkdownRenderer content={metadata.sections.tips} darkMode={true} />
             </div>
           </div>
         </section>
@@ -213,9 +208,7 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
                 <span className="text-3xl">🎓</span>
                 Ce que vous allez apprendre
               </h2>
-              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
-                {metadata.sections.learning}
-              </div>
+              <MarkdownRenderer content={metadata.sections.learning} />
             </div>
           </div>
         </section>
@@ -230,9 +223,7 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
           </h2>
           <div className="bg-factory-surface rounded-lg border border-factory-border p-8">
             {metadata.sections?.installation ? (
-              <div className="prose max-w-none text-factory-text-secondary whitespace-pre-wrap leading-relaxed">
-                {metadata.sections.installation}
-              </div>
+              <MarkdownRenderer content={metadata.sections.installation} />
             ) : (
               <ol className="space-y-4">
                 <li className="flex gap-4">
