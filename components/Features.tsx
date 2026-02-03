@@ -5,18 +5,18 @@ import { motion } from 'framer-motion'
 const features = [
   {
     icon: '⚡',
-    title: '15-Minute Setup',
-    description: 'Import, connect your accounts, done. You\'ll be running automations before your coffee gets cold.',
+    title: 'Installation en 15 Minutes',
+    description: 'Importez, connectez vos comptes, terminé. Vos automatisations tourneront avant que votre café ne refroidisse.',
   },
   {
     icon: '💰',
-    title: 'Proven ROI Templates',
-    description: 'These aren\'t theoretical — every template comes from real businesses seeing 400-15,000% returns.',
+    title: 'ROI Prouvé',
+    description: 'Pas de théorie — chaque template vient d'entreprises réelles avec des retours de 400-15,000%.',
   },
   {
     icon: '🔒',
-    title: 'One Price, Forever Yours',
-    description: 'No subscriptions. No per-automation fees. Pay once, automate forever.',
+    title: 'Un Prix, À Vous Pour Toujours',
+    description: 'Pas d'abonnement. Pas de frais par automation. Payez une fois, automatisez à vie.',
   },
 ]
 
@@ -27,7 +27,7 @@ export default function Features() {
         {/* Section header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Why Choose Agentic Factory?
+            Pourquoi Choisir Agentic Factory ?
           </h2>
         </div>
 
@@ -59,31 +59,31 @@ export default function Features() {
 
         {/* Pricing Comparison */}
         <div className="mt-16">
-          <h3 className="text-2xl md:text-3xl font-bold text-center mb-8">The Real Cost Comparison</h3>
+          <h3 className="text-2xl md:text-3xl font-bold text-center mb-8">La Vraie Comparaison des Coûts</h3>
           <div className="overflow-x-auto">
             <table className="w-full max-w-4xl mx-auto border-collapse bg-white rounded-lg overflow-hidden border border-factory-border">
               <thead>
                 <tr className="bg-factory-stone">
                   <th className="px-6 py-4 text-left font-semibold text-factory-dark"></th>
-                  <th className="px-6 py-4 text-center font-semibold text-factory-dark">Our Templates</th>
+                  <th className="px-6 py-4 text-center font-semibold text-factory-dark">Nos Templates</th>
                   <th className="px-6 py-4 text-center font-semibold text-factory-dark">DIY n8n</th>
-                  <th className="px-6 py-4 text-center font-semibold text-factory-dark">Hire Agency</th>
+                  <th className="px-6 py-4 text-center font-semibold text-factory-dark">Agence</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="border-t border-factory-border">
-                  <td className="px-6 py-4 font-medium">Cost</td>
+                  <td className="px-6 py-4 font-medium">Coût</td>
                   <td className="px-6 py-4 text-center">
-                    <span className="font-mono font-medium text-factory-orange">€39-59</span>
-                    <div className="text-sm text-factory-text-muted">one-time</div>
+                    <span className="font-mono font-medium text-factory-orange">€30-50</span>
+                    <div className="text-sm text-factory-text-muted">paiement unique</div>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="font-mono font-medium">"Free"</span>
-                    <div className="text-sm text-factory-text-muted">but 100+ hours</div>
+                    <span className="font-mono font-medium">"Gratuit"</span>
+                    <div className="text-sm text-factory-text-muted">mais 100+ heures</div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="font-mono font-medium">€5k+</span>
-                    <div className="text-sm text-factory-text-muted">and 4-6 weeks</div>
+                    <div className="text-sm text-factory-text-muted">et 4-6 semaines</div>
                   </td>
                 </tr>
               </tbody>

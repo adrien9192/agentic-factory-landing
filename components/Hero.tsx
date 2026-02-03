@@ -15,13 +15,13 @@ export default function Hero() {
           >
             {/* Main heading */}
             <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
-              Stop Losing 20 Hours a Week to Tasks{' '}
-              <span className="text-factory-orange">a Robot Should Do</span>
+              Arrêtez de Perdre 20h par Semaine sur des Tâches{' '}
+              <span className="text-factory-orange">qu'un Robot Devrait Faire</span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-lg md:text-xl text-factory-text-secondary leading-relaxed mb-8 max-w-2xl">
-              Plug-and-play automation templates that pay for themselves in 48 hours — no coding, no agency, no BS.
+              Templates d'automatisation clé-en-main qui se rentabilisent en 48h — sans coder, sans agence, sans bullshit.
             </p>
 
             {/* CTAs */}
@@ -30,19 +30,19 @@ export default function Hero() {
                 href="#templates"
                 className="bg-factory-orange text-white font-semibold px-8 py-4 rounded-lg text-lg hover:bg-[#E55A2B] active:bg-[#CC4F26] transition-colors duration-150 shadow-sm hover:shadow-md text-center"
               >
-                Browse Templates
+                Voir les Templates
               </a>
               <a
                 href="#video"
                 className="border-2 border-factory-dark text-factory-dark font-semibold px-8 py-4 rounded-lg text-lg hover:bg-factory-dark hover:text-white transition-all duration-150 text-center"
               >
-                See How It Works (2 min)
+                Comment ça Marche (2 min)
               </a>
             </div>
 
             {/* Social proof */}
             <p className="text-sm text-factory-text-muted">
-              No subscriptions • One-time payment • Own it forever
+              Pas d'abonnement • Paiement unique • À vous pour toujours
             </p>
           </motion.div>
 
@@ -57,7 +57,7 @@ export default function Hero() {
               <div className="absolute inset-0 bg-gradient-to-br from-factory-dark/5 to-factory-orange/10"></div>
               <div className="relative text-center p-8">
                 <div className="text-6xl mb-4">⚙️</div>
-                <p className="text-factory-text-secondary font-medium">Automation Templates</p>
+                <p className="text-factory-text-secondary font-medium">Templates d'Automatisation</p>
               </div>
             </div>
           </motion.div>
