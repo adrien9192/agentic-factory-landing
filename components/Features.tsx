@@ -6,17 +6,17 @@ const features = [
   {
     icon: '⚡',
     title: 'Installation en 15 Minutes',
-    description: 'Importez, connectez vos comptes, terminé. Vos automatisations tourneront avant que votre café ne refroidisse.',
+    description: "Importez, connectez vos comptes, terminé. Vos automatisations tourneront avant que votre café ne refroidisse.",
   },
   {
     icon: '💰',
     title: 'ROI Prouvé',
-    description: 'Pas de théorie — chaque template vient d'entreprises réelles avec des retours de 400-15,000%.',
+    description: "Pas de théorie — chaque template vient d'entreprises réelles avec des retours de 400-15,000%.",
   },
   {
     icon: '🔒',
     title: 'Un Prix, À Vous Pour Toujours',
-    description: 'Pas d'abonnement. Pas de frais par automation. Payez une fois, automatisez à vie.',
+    description: "Pas d'abonnement. Pas de frais par automation. Payez une fois, automatisez à vie.",
   },
 ]
 

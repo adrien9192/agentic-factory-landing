@@ -77,7 +77,7 @@ export default function TemplatesPreview() {
 
   // Transform workflows to template format
   const allTemplates = [
-    ...legacyTemplates,
+    ...legacyTemplates.map(t => ({ ...t, category: undefined as string | undefined })),
     ...workflows.map((w) => ({
       id: w.id,
       title: w.title_fr,
@@ -85,7 +85,7 @@ export default function TemplatesPreview() {
       price: w.complexity === 'Advanced' ? '€50' : '€30',
       platforms: ['n8n'],
       slug: w.slug,
-      category: w.category,
+      category: w.category as string | undefined,
     })),
   ]
 
