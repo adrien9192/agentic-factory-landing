@@ -76,21 +76,26 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
         <div className="max-w-5xl mx-auto px-6">
           <Link
             href="/#templates"
-            className="inline-flex items-center text-factory-text-secondary hover:text-factory-orange mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-factory-text-secondary hover:text-factory-orange mb-6 transition-all duration-150 hover:-translate-x-1 font-medium group"
           >
-            ← Retour aux templates
+            <svg className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Retour aux templates
           </Link>
 
           <div className="grid md:grid-cols-2 gap-8 items-start">
             {/* Left: Image */}
-            <div className="relative aspect-video rounded-lg overflow-hidden border border-factory-border">
+            <div className="relative aspect-video rounded-lg overflow-hidden border border-factory-border group">
               <Image
                 src={imageUrl}
                 alt={metadata.title_fr}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
               />
-              <div className="absolute top-4 right-4 bg-factory-dark text-white px-3 py-1.5 rounded-md font-mono text-sm">
+              <div className="absolute top-4 right-4 bg-factory-dark text-white px-3 py-1.5 rounded-md font-mono text-sm shadow-lg border border-white/10">
                 {metadata.complexity === 'Advanced' ? '€50' : '€30'}
               </div>
             </div>
@@ -113,14 +118,14 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
                 {metadata.title_fr}
               </h1>
 
-              <p className="text-lg text-factory-text-secondary mb-6 leading-relaxed">
+              <p className="text-lg text-factory-text-secondary mb-6 leading-relaxed" style={{ lineHeight: '1.6' }}>
                 {metadata.description_short_fr}
               </p>
 
               {metadata.tags_fr && metadata.tags_fr.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   {metadata.tags_fr.slice(0, 5).map((tag, i) => (
-                    <span key={i} className="text-sm bg-factory-orange/10 text-factory-orange px-3 py-1 rounded-full">
+                    <span key={i} className="text-sm bg-factory-orange/10 text-factory-orange px-3 py-1 rounded-full font-medium">
                       {tag}
                     </span>
                   ))}
@@ -130,10 +135,29 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
               <a
                 href={`/templates/${metadata.slug}.json`}
                 download
-                className="inline-block bg-factory-orange text-white font-semibold px-8 py-4 rounded-lg hover:bg-[#E55A2B] transition-colors shadow-sm hover:shadow-md"
+                className="inline-flex items-center gap-2 bg-factory-orange text-white font-semibold px-8 py-4 rounded-lg hover:bg-[#E55A2B] active:bg-[#CC4F26] transition-all duration-150 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 group"
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
                 Télécharger le Workflow (JSON)
               </a>
+
+              {/* Trust indicators */}
+              <div className="mt-6 flex flex-wrap gap-4 text-sm text-factory-text-secondary">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-factory-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Installation 15 min</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-factory-green" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Garantie 30 jours</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -261,26 +285,61 @@ export default async function WorkflowPage({ params }: { params: { slug: string 
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 bg-factory-dark text-white">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold mb-4">Prêt à Automatiser ?</h2>
-          <p className="text-white/80 mb-8 max-w-2xl mx-auto">
+      <section className="py-16 bg-factory-dark text-white relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+
+        <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Prêt à Automatiser ?</h2>
+          <p className="text-lg text-white/80 mb-2 max-w-2xl mx-auto">
             Téléchargez ce workflow maintenant et gagnez du temps dès aujourd'hui.
           </p>
-          <div className="flex gap-4 justify-center">
+          <p className="text-sm text-factory-orange font-medium mb-8">
+            Installation en 15 minutes • Garantie satisfait ou remboursé 30 jours
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <a
               href={`/templates/${metadata.slug}.json`}
               download
-              className="bg-factory-orange text-white font-semibold px-8 py-4 rounded-lg hover:bg-[#E55A2B] transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-factory-orange text-white font-semibold px-8 py-4 rounded-lg hover:bg-[#E55A2B] active:bg-[#CC4F26] transition-all duration-150 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 text-lg"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
               Télécharger le Workflow
             </a>
             <Link
               href="/#templates"
-              className="border-2 border-white text-white font-semibold px-8 py-4 rounded-lg hover:bg-white hover:text-factory-dark transition-all"
+              className="inline-flex items-center justify-center gap-2 border-2 border-white text-white font-semibold px-8 py-4 rounded-lg hover:bg-white hover:text-factory-dark hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 text-lg"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
               Voir Tous les Templates
             </Link>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-white/70">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-factory-orange" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>Paiement sécurisé</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-factory-orange" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>Mises à jour gratuites</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-factory-orange" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>Support réactif</span>
+            </div>
           </div>
         </div>
       </section>

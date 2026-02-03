@@ -3,12 +3,27 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-factory-surface text-factory-text-primary antialiased;
+    font-size: 16px; /* Minimum for mobile to prevent zoom */
   }
 
   h1, h2, h3, h4 {
     letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  p {
+    line-height: 1.6;
+  }
+
+  /* Optimal reading line length */
+  p, li {
+    max-width: 75ch;
   }
 }
 

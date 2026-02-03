@@ -21,20 +21,20 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Agentic Factory | Stop Losing 20 Hours a Week to Robot Work',
-  description: 'Plug-and-play automation templates that pay for themselves in 48 hours. No coding, no agency, no BS.',
-  keywords: ['n8n', 'make.com', 'automation', 'templates', 'workflows', 'no-code'],
+  title: 'Agentic Factory | Arrêtez de Perdre 20h par Semaine sur des Tâches qu\'un Robot Devrait Faire',
+  description: 'Templates d\'automatisation clé-en-main qui se rentabilisent en 48h — sans coder, sans agence, sans bullshit.',
+  keywords: ['n8n', 'make.com', 'automation', 'automatisation', 'templates', 'workflows', 'no-code', 'ia'],
   authors: [{ name: 'Agentic Factory' }],
   openGraph: {
-    title: 'Agentic Factory | Automation Templates That Actually Work',
-    description: 'Recover lost sales, kill no-shows, turn leads into customers — automatically.',
+    title: 'Agentic Factory | Templates d\'Automatisation qui Marchent Vraiment',
+    description: 'Récupérez des ventes perdues, éliminez les absences, transformez des prospects en clients — automatiquement.',
     type: 'website',
-    locale: 'en_US',
+    locale: 'fr_FR',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Agentic Factory',
-    description: 'Plug-and-play automation templates for n8n & Make.com',
+    description: 'Templates d\'automatisation clé-en-main pour n8n & Make.com',
   },
 }
 
@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${sourceSans.variable} ${jetbrainsMono.variable}`}>
+    <html lang="fr" className={`${spaceGrotesk.variable} ${sourceSans.variable} ${jetbrainsMono.variable}`}>
       <body className="font-body bg-factory-surface text-factory-text-primary antialiased">{children}</body>
     </html>
   )
