@@ -33,6 +33,7 @@ export default function Footer() {
               <li><Link href="/templates?category=services" className="text-gray-400 hover:text-factory-orange transition-colors">Services</Link></li>
               <li><Link href="/templates?category=b2b" className="text-gray-400 hover:text-factory-orange transition-colors">B2B / SaaS</Link></li>
               <li><Link href="/templates" className="text-gray-400 hover:text-factory-orange transition-colors">Tous les Templates</Link></li>
+              <li><Link href="/case-studies" className="text-gray-400 hover:text-factory-orange transition-colors">Études de Cas</Link></li>
             </ul>
           </nav>
 
