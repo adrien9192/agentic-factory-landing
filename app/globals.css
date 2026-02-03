@@ -70,3 +70,25 @@
     @apply text-xs font-mono bg-factory-stone text-factory-dark px-2 py-1 rounded;
   }
 }
+
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus states for accessibility */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+  @apply outline-none ring-2 ring-factory-orange ring-offset-2;
+}
+
+a:focus-visible,
+button:focus-visible {
+  @apply outline-none ring-2 ring-factory-orange ring-offset-2;
+}

@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "id": "001",
+    "slug": "abandoned-cart-recovery-n8n",
+    "title_en": "Abandoned Cart Recovery - E-commerce",
+    "title_fr": "Récupération de paniers abandonnés - E-commerce",
+    "description_short_en": "Automate cart recovery emails to save 30% of abandoned sales with smart timing and anti-spam logic.",
+    "description_short_fr": "Automatisez les emails de récupération de panier pour sauver 30% des ventes abandonnées avec timing intelligent et logique anti-spam.",
+    "description_full_en": "Automated workflow that captures abandoned Shopify carts, validates customer emails, checks for spam prevention, waits 2 hours, and sends personalized recovery emails with discount codes.",
+    "description_full_fr": "### Le circuit complet\n\n**1. Panier abandonné (Webhook Shopify)**\nQuand un client abandonne son panier sur Shopify, un webhook se déclenche automatiquement :\n- Shopify envoie les données du panier vers n8n\n- Email client, nom, montant total, URL du panier\n- Token unique pour tracer la commande\n\n**2. Extraction des données**\nLe workflow extrait les infos essentielles :\n- Email client\n- Prénom\n- Montant du panier\n- Devise\n- URL de récupération du panier\n\n**3. Validation de l'email**\nVérifie que l'email existe et est valide :\n- Si vide → workflow s'arrête\n- Si valide → continue\n\n**4. Check anti-spam (PostgreSQL)**\nRequête dans la base de données :\n- Combien de fois ce client a été relancé ?\n- Dernière date d'envoi\n- Si <3 relances → OK\n- Si ≥3 relances → STOP (évite le spam)\n\n**5. Délai de 2 heures**\nAttend 2h avant d'envoyer l'email de relance :\n- Pourquoi ? Le client peut finaliser l'achat entre-temps\n- Timing optimal : ni trop tôt (chiant), ni trop tard (oublié)\n\n**6. Envoi de l'email de récupération**\nEmail automatique avec :\n- Sujet : \"{{prénom}}, ton panier t'attend 🛒\"\n- Corps : Rappel des produits + code promo 10%\n- Bouton CTA : \"Finaliser mon achat\" (lien direct vers panier)\n\n**7. Logging dans PostgreSQL**\nEnregistre la relance dans la base :\n- Email envoyé ✅\n- Date/heure\n- Montant du panier\n- Statut (sent, bounced, clicked...)",
+    "category": "E-commerce",
+    "complexity": "Intermediate",
+    "tags_en": [
+      "e-commerce",
+      "shopify",
+      "email",
+      "recovery",
+      "automation"
+    ],
+    "tags_fr": [
+      "e-commerce",
+      "shopify",
+      "email",
+      "récupération",
+      "automation"
+    ],
+    "author": "Agentic Factory",
+    "date": "2024",
+    "url_original": "",
+    "nodes_count": 12,
+    "sections": {
+      "why": "Tu as un e-commerce. **70% des clients ajoutent au panier... et disparaissent.**\n\n**Le problème :**\n- Tu ne sais pas qui ils sont\n- Tu ne peux pas les relancer\n- Tu perds $10K/mois en ventes évaporées\n- Les clients achètent chez ton concurrent\n\n**Ce workflow :**\nQuand un client abandonne son panier Shopify, ce workflow capte l'email, vérifie qu'il n'a pas déjà été spammé, et envoie automatiquement un email de relance avec un code promo de 10%. **Récupère 30% des paniers abandonnés en autopilot.**\n\n**Ce que tu gagnes :**\n- **30% de conversion** sur paniers abandonnés (vs 0% sans relance)\n- **Email automatique** 2h après l'abandon (timing optimal)\n- **Anti-spam intelligent** : max 3 relances par client\n- **Tracking complet** : base de données PostgreSQL des relances\n\n**Pour qui ?**\n- E-commerces Shopify/WooCommerce avec >100 paniers/mois\n- Marques DTC (direct-to-consumer)\n- Dropshippers qui veulent maximiser les conversions\n- Agences e-commerce qui gèrent des clients",
+      "description": "### Le circuit complet\n\n**1. Panier abandonné (Webhook Shopify)**\nQuand un client abandonne son panier sur Shopify, un webhook se déclenche automatiquement :\n- Shopify envoie les données du panier vers n8n\n- Email client, nom, montant total, URL du panier\n- Token unique pour tracer la commande\n\n**2. Extraction des données**\nLe workflow extrait les infos essentielles :\n- Email client\n- Prénom\n- Montant du panier\n- Devise\n- URL de récupération du panier\n\n**3. Validation de l'email**\nVérifie que l'email existe et est valide :\n- Si vide → workflow s'arrête\n- Si valide → continue\n\n**4. Check anti-spam (PostgreSQL)**\nRequête dans la base de données :\n- Combien de fois ce client a été relancé ?\n- Dernière date d'envoi\n- Si <3 relances → OK\n- Si ≥3 relances → STOP (évite le spam)\n\n**5. Délai de 2 heures**\nAttend 2h avant d'envoyer l'email de relance :\n- Pourquoi ? Le client peut finaliser l'achat entre-temps\n- Timing optimal : ni trop tôt (chiant), ni trop tard (oublié)\n\n**6. Envoi de l'email de récupération**\nEmail automatique avec :\n- Sujet : \"{{prénom}}, ton panier t'attend 🛒\"\n- Corps : Rappel des produits + code promo 10%\n- Bouton CTA : \"Finaliser mon achat\" (lien direct vers panier)\n\n**7. Logging dans PostgreSQL**\nEnregistre la relance dans la base :\n- Email envoyé ✅\n- Date/heure\n- Montant du panier\n- Statut (sent, bounced, clicked...)",
+      "installation": "### Prérequis\n- [ ] n8n installé (cloud ou self-hosted)\n- [ ] Compte Shopify avec API activée\n- [ ] Base PostgreSQL (gratuit sur Supabase ou Neon)\n- [ ] Compte Gmail ou SMTP configuré",
+      "usage": "### Scénario 1 : E-commerce fashion 100 abandons/jour\n**Situation :** Boutique vêtements en ligne. 100 paniers abandonnés/jour (€80 moyen).\n\n**Setup :**\n1. Active le workflow\n2. Configure le code promo BACK10 dans Shopify (10% off)\n3. Laisse tourner\n\n**Résultat automatique :**\n- 100 abandons/jour → 30 conversions (30% taux récupération)\n- €80 × 30 = €2,400/jour récupérés\n- €72,000/mois sauvés\n\n**ROI :** Coût workflow €0. Gain €72K/mois. Infini.",
+      "tips": "**Anti-spam = clé du succès**\n- Max 3 relances par client → respecte ça\n- Si le client a acheté entre-temps, ne relance PAS\n- Ajoute un lien \"Unsubscribe\" (RGPD)\n\n**Timing optimal par industrie**\n- Fashion/beauté : 2h\n- Électronique : 6h\n- High-ticket (>€500) : 24h\n- Services/formations : 12h\n\n**Test A/B des codes promo**\n- BACK5 (5%) vs BACK10 (10%) vs BACK15 (15%)\n- Mesure le taux de conversion vs marge\n- Souvent 10% = sweet spot\n\n**Email mobile-first**\n- 70% ouvrent sur mobile\n- Bouton CTA gros et visible\n- Texte court (max 100 mots)\n- Image du produit abandonné\n\n**Segmentation avancée**\n- Panier <€50 : pas de promo (marge trop faible)\n- Panier €50-€150 : 10% off\n- Panier >€150 : 15% off (incentive gros paniers)",
+      "learning": "✅ Configurer des webhooks Shopify\n✅ Gérer des bases de données PostgreSQL avec n8n\n✅ Implémenter de la logique anti-spam\n✅ Utiliser des délais (Wait node) pour le timing\n✅ Envoyer des emails transactionnels\n✅ Logger des événements pour analytics\n✅ Créer des conditions IF/ELSE complexes\n\n**Temps d'installation :** 30 minutes\n**Niveau de difficulté :** Intermédiaire\n**ROI :** 30% des paniers abandonnés récupérés\n\n🔥 **Prêt à récupérer tes ventes perdues ?** Importe le workflow et connecte Shopify."
+    }
+  },
+  "workflow_json": null
+}

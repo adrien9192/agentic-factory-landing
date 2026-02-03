@@ -1,0 +1,265 @@
+{
+  "metadata": {
+    "id": "009",
+    "slug": "parlez-vos-feuilles-google-laide-de-chatgpt-5",
+    "title_en": "Talk to Your Google Sheets Using ChatGPT-5",
+    "title_fr": "Parlez à vos feuilles Google à l'aide de ChatGPT-5",
+    "description_short_en": "Transform Google Sheets into an AI-powered chatbot with GPT-5 Mini for instant data analysis, smart insights, and seamless natural language conversation.",
+    "description_short_fr": "Transformez Google Sheets en un chatbot alimenté par l'IA avec GPT-5 Mini pour une analyse instantanée des données, des informations intelligentes et une conversation fluide en langage naturel.",
+    "description_full_en": "Talk to Your Google Sheets Using ChatGPT-5\n1. Workflow Overview\nThis workflow titled\n\"Talk to Your Google Sheets Using ChatGPT-5\"\nenables intelligent, natural language querying of marketing data stored in Google Sheets via an AI-powered chatbot interface. It leverages OpenAI's GPT-5 Mini model (represented here as \"gpt-4.1-nano\") to interpret user questions and provide precise data-driven answers by querying a single Google Sheet dataset.\nThe workflow is logically structured into the following blocks:\n1.1 Input Reception:\nCaptures user queries via a chat trigger.\n1.2 AI Conversational Memory:\nMaintains contextual memory of the conversation.\n1.3 AI Processing Agent:\nThe core LangChain agent that orchestrates the AI language model and data tool to answer questions.\n1.4 Data Access Tool:\nFetches and analyzes data from a specified Google Sheet.\n1.5 Auxiliary Documentation:\nSticky notes providing setup instructions, usage guidelines, and tutorial links.\n2. Block-by-Block Analysis\n2.1 Input Reception\nOverview:\nReceives chat input from users to trigger the workflow.\nNodes Involved:\nChat with Your Data\nNode Details:\nType:\n@n8n/n8n-nodes-langchain.chatTrigger\nRole: Listens for incoming chat messages to start the AI conversation.\nConfiguration: Default settings with a webhook ID (\nedca0f0a-77c3-43e5-8ece-e514a29446f5\n).\nConnections:\nOutputs to the\nTalk to Your Data\nnode.\nEdge Cases:\nPossible webhook connectivity issues.\nRate limiting or message format errors.\nVersion: 1.3\n2.2 AI Conversational Memory\nOverview:\nMaintains a buffer memory window to provide context for ongoing conversations.\nNodes Involved:\nMemory\nNode Details:\nType:\n@n8n/n8n-nodes-langchain.memoryBufferWindow\nRole: Stores recent conversation history allowing the AI to remember prior exchanges.\nConfiguration: Uses default buffer window (no custom parameters).\nConnections:\nMemory output connected back as\nai_memory\ninput to the\nTalk to Your Data\nagent.\nEdge Cases:\nMemory overflow or loss of context if conversation is too long.\nVersion: 1.3\n2.3 AI Processing Agent\nOverview:\nActs as the orchestrator AI agent that uses the OpenAI model and the Google Sheets tool to answer user queries.\nNodes Involved:\nTalk to Your Data\nNode Details:\nType:\n@n8n/n8n-nodes-langchain.agent\nRole: Main AI agent combining language understanding with data access.\nConfiguration:\nSystem message instructs agent to answer questions\nonly using Google Sheets data\n, emphasizing precision and conservatism.\nOutput parser enabled to format AI responses properly.\nConnections:\nReceives input from\nChat with Your Data\n.\nSends language model input to\nOpenAI Chat Model\n.\nSends tool input to\nAnalyze Data\n(Google Sheets).\nReceives memory input from\nMemory\n.\nEdge Cases:\nMisinterpretation if system prompt is ignored.\nFailures if Google Sheets API or OpenAI API fails.\nVersion: 2.2\n2.4 Data Access Tool\nOverview:\nConnects and retrieves data from a specific Google Sheets document and sheet.\nNodes Involved:\nAnalyze Data\nNode Details:\nType:\nn8n-nodes-base.googleSheetsTool\nRole: Queries the designated Google Sheets dataset to provide data for analysis.\nConfiguration:\nSpreadsheet ID:\n1UDWt0-Z9fHqwnSNfU3vvhSoYCFG6EG3E-ZewJC_CLq4\nSheet name: The sheet with ID\n365710158\ntitled \"Data\".\nUses OAuth2 credentials implicitly for access.\nConnections:\nProvides tool output to\nTalk to Your Data\n.\nEdge Cases:\nOAuth token expiration or permission errors.\nData format changes breaking queries.\nVersion: 4.7\n2.5 Auxiliary Documentation\nOverview:\nProvides user-facing documentation, setup instructions, and tutorial links through sticky notes.\nNodes Involved:\nSticky Note2\n,\nSticky Note7\n,\nSticky Note8\n,\nSticky Note9\n,\nSticky Note10\n,\nSticky Note\nNode Details:\nType:\nn8n-nodes-base.stickyNote\nRole: Contains detailed instructions on setup, usage scenarios, and external resources.\nContent Highlights:\nOverview of the workflow purpose.\nStepwise setup for OpenAI API key and Google Sheets.\nExample questions users can ask.\nEmbedded tutorial video (\nYouTube: qsrVPdo6svc\n)\nContact and LinkedIn information for support.\nConnections: None (standalone informational nodes).\nEdge Cases:\nStale or broken external links.\nVersion: 1\n3. Summary Table\nNode Name\nNode Type\nFunctional Role\nInput Node(s)\nOutput Node(s)\nSticky Note\nChat with Your Data\n@n8n/n8n-nodes-langchain.chatTrigger\nReceives user chat input\n—\nTalk to Your Data\nMemory\n@n8n/n8n-nodes-langchain.memoryBufferWindow\nMaintains conversation memory\n—\nTalk to Your Data (ai_memory)\nTalk to Your Data\n@n8n/n8n-nodes-langchain.agent\nOrchestrates AI language model and tool\nChat with Your Data, Memory, OpenAI Chat Model, Analyze Data\n—\nOpenAI Chat Model\n@n8n/n8n-nodes-langchain.lmChatOpenAi\nProvides GPT-5 Mini language model\nTalk to Your Data\nTalk to Your Data\nAnalyze Data\nn8n-nodes-base.googleSheetsTool\nQueries Google Sheets data\nTalk to Your Data\nTalk to Your Data\nSticky Note2\nn8n-nodes-base.stickyNote\nWorkflow overview and purpose\n—\n—\n## Talk to Your Data with Google Sheets & OpenAI GPT-5 Mini - Intelligent data analysis chatbot\nSticky Note7\nn8n-nodes-base.stickyNote\nExample questions users can ask\n—\n—\n### 3. Ask Questions of Your Data - Examples of natural language queries\nSticky Note8\nn8n-nodes-base.stickyNote\nSetup instructions + tutorial link\n—\n—\n## 🎥 Watch This Tutorial - Includes OpenAI and Google Sheets setup steps + video link\nSticky Note9\nn8n-nodes-base.stickyNote\nOpenAI API key setup\n—\n—\n### 1. Set Up OpenAI Connection - Steps to get API key and billing setup\nSticky Note10\nn8n-nodes-base.stickyNote\nGoogle Sheets data preparation\n—\n—\n### 2. Prepare Your Google Sheet - Format and OAuth login instructions\nSticky Note\nn8n-nodes-base.stickyNote\nEmpty (placeholder or UI spacing)\n—\n—\n4. Reproducing the Workflow from Scratch\nCreate Chat Trigger Node\nAdd node:\n@n8n/n8n-nodes-langchain.chatTrigger\nName:\nChat with Your Data\nConfigure webhook ID (auto-generated or custom).\nNo additional parameters needed.\nAdd Memory Buffer Node\nAdd node:\n@n8n/n8n-nodes-langchain.memoryBufferWindow\nName:\nMemory\nUse default configuration (no parameters).\nConnect output to\nTalk to Your Data\nunder\nai_memory\ninput.\nAdd OpenAI Language Model Node\nAdd node:\n@n8n/n8n-nodes-langchain.lmChatOpenAi\nName:\nOpenAI Chat Model\nSet model to\ngpt-4.1-nano\n(represents GPT-5 Mini).\nConfigure OpenAI credentials with your API key.\nConnect output to\nTalk to Your Data\nunder\nai_languageModel\ninput.\nAdd Google Sheets Tool Node\nAdd node:\nn8n-nodes-base.googleSheetsTool\nName:\nAnalyze Data\nSet Spreadsheet ID to\n1UDWt0-Z9fHqwnSNfU3vvhSoYCFG6EG3E-ZewJC_CLq4\nSet Sheet Name to sheet ID\n365710158\n(\"Data\").\nAuthenticate with Google OAuth2 credentials.\nConnect output to\nTalk to Your Data\nunder\nai_tool\ninput.\nAdd LangChain Agent Node\nAdd node:\n@n8n/n8n-nodes-langchain.agent\nName:\nTalk to Your Data\nSet system message to:\nGoogle Sheets Ask-Data\n\nYou are Ask-Data. Answer questions using Google Sheets ONLY via the tool below. Be precise and conservative.\n\nThere is only one dataset. don't ask what dataset it is.\n\nUse the data tool to answer the question.\nEnable output parser.\nConnect inputs:\nmain\nfrom\nChat with Your Data\nai_languageModel\nfrom\nOpenAI Chat Model\nai_tool\nfrom\nAnalyze Data\nai_memory\nfrom\nMemory\n(Optional) Add Sticky Notes for Documentation\nCreate several\nn8n-nodes-base.stickyNote\nnodes.\nAdd content describing setup instructions, usage examples, and tutorial links as in the original workflow.\nValidate all connections and credentials\nEnsure Google OAuth2 credentials have access to the specified spreadsheet.\nEnsure OpenAI API key is valid and has billing enabled.\nTest the webhook by sending sample chat queries to trigger the workflow.\n5. General Notes & Resources\nNote Content\nContext or Link\n🎥 Watch the tutorial video on YouTube for a step-by-step guide:\nhttps://youtu.be/qsrVPdo6svc\nTutorial video linked in Sticky Note8\nOpenAI API Keys and Billing setup instructions:\nhttps://platform.openai.com/api-keys\n,\nhttps://platform.openai.com/settings/organization/billing/overview\nSetup instructions in Sticky Note8 and Sticky Note9\nSample marketing data spreadsheet format reference:\nGoogle Sheet\nData format guidance in Sticky Note8 and Sticky Note10\nContact for support or customization inquiries:\n[email protected]\n, LinkedIn:\nhttps://www.linkedin.com/in/robert-breen-29429625/\nProvided in Sticky Note8\nDisclaimer:\nThe provided text and workflow are generated and processed exclusively with n8n, an integration and automation tool. This treatment strictly complies with content policies and contains no illegal, offensive, or protected elements. All data handled is legal and publicly available.\nCopied to clipboard",
+    "description_full_fr": "### Architecture simple\n\n**1. Tu poses une question (Chatbot)**\nInterface web ou embed sur ton site :\n- \"Quel est mon CA total sur Q4 2024 ?\"\n\n**2. L'IA lit ta Google Sheet**\n- GPT-5 Mini accède directement à ta Sheet\n- Lit les colonnes, les données, comprend la structure\n- Pas besoin de pré-traiter : l'IA s'adapte automatiquement\n\n**3. L'IA calcule et répond**\n- Fait les calculs nécessaires (SUM, AVG, MAX, filters...)\n- Répond en français : \"Ton CA Q4 2024 est de 45 782 €\"\n\n**4. Mémoire conversationnelle**\n- Tu peux poser des questions de follow-up :\n  - Toi : \"Et en Q3 ?\"\n  - IA : \"Le CA Q3 2024 était de 38 590 €\"",
+    "category": "AI",
+    "complexity": "Intermediate",
+    "tags_en": [],
+    "tags_fr": [],
+    "author": "Robert Breen",
+    "date": "Unknown",
+    "url_original": "https://n8nworkflows.xyz/workflows/talk-to-your-google-sheets-using-chatgpt-5-7639",
+    "nodes_count": 11,
+    "sections": {
+      "why": "Tu as 10 000 lignes de data dans Google Sheets (ventes, marketing, clients, analytics...).\n\n**Pour analyser, tu dois :**\n- Ouvrir Sheets\n- Créer des formules SUMIF/VLOOKUP complexes\n- Faire des tableaux croisés dynamiques\n- Exporter dans Excel/Power BI pour des graphes\n- Demander à un data analyst si c'est trop complexe\n\n**Résultat :** Tu ne regardes jamais tes données. Elles dorment.\n\n**Ce workflow :**\nUn chatbot IA qui lit ta Google Sheet et répond à TES questions en langage naturel.\n\n**Exemples :**\n- \"Combien j'ai dépensé en pub Facebook ce mois-ci ?\"\n- \"Quel est mon meilleur canal d'acquisition ?\"\n- \"Qui sont mes 5 meilleurs clients par chiffre d'affaires ?\"\n- \"Quelle est ma marge moyenne sur les produits catégorie A ?\"\n\n**Ce que tu gagnes :**\n- **Zéro formule à écrire** : pose des questions en français\n- **Réponses instantanées** : 3 secondes vs 10 minutes de recherche\n- **Accessible aux non-techs** : ton boss/équipe peut interroger les données\n- **1 seule source de vérité** : tout le monde interroge la même Sheet\n\n**Pour qui ?**\n- Founders qui veulent suivre leurs métriques sans Excel\n- Marketeurs qui analysent des campagnes\n- Sales qui veulent des insights CRM rapides\n- Ops qui trackent des KPIs\n\n---",
+      "description": "### Architecture simple\n\n**1. Tu poses une question (Chatbot)**\nInterface web ou embed sur ton site :\n- \"Quel est mon CA total sur Q4 2024 ?\"\n\n**2. L'IA lit ta Google Sheet**\n- GPT-5 Mini accède directement à ta Sheet\n- Lit les colonnes, les données, comprend la structure\n- Pas besoin de pré-traiter : l'IA s'adapte automatiquement\n\n**3. L'IA calcule et répond**\n- Fait les calculs nécessaires (SUM, AVG, MAX, filters...)\n- Répond en français : \"Ton CA Q4 2024 est de 45 782 €\"\n\n**4. Mémoire conversationnelle**\n- Tu peux poser des questions de follow-up :\n  - Toi : \"Et en Q3 ?\"\n  - IA : \"Le CA Q3 2024 était de 38 590 €\"",
+      "installation": "### Prérequis\n- [ ] n8n installé\n- [ ] Google Sheets avec des données\n- [ ] API Key OpenAI (GPT-5 Mini / GPT-4.1-nano)",
+      "usage": "### Scénario 1 : Dashboard marketing en 30 secondes\n**Situation :** Tu veux un snapshot rapide de tes campagnes.\n\n**Questions à poser :**\n1. \"Quel est mon spend total ce mois-ci ?\"\n2. \"Quel canal a le meilleur ROI ?\"\n3. \"Combien de leads Google Ads vs Facebook Ads ?\"\n4. \"Quelle est ma conversion rate moyenne ?\"\n\n**Résultat :**\nEn 2 minutes de questions, tu as ton dashboard mental sans ouvrir Sheets.\n\n---",
+      "tips": "**Optimise ta Sheet pour l'IA**\n\n**❌ Mauvaise structure :**\n```\n| Q1 2024 | | | Q2 2024 | | |\n| Ventes | Leads | CA | Ventes | Leads | CA |\n```\n(Multi-niveaux d'en-têtes = l'IA s'embrouille)\n\n**✅ Bonne structure :**\n```\n| Date    | Quarter | Ventes | Leads | CA   |\n| 2024-01 | Q1      | 100    | 50    | 5000 |\n```\n(Flat, 1 ligne = 1 observation)\n\n**Pose des questions précises**\n\n- ❌ \"Parle-moi de mes données\"\n- ✅ \"Quel est mon CA total en octobre ?\"\n\nL'IA est excellente pour des questions ciblées, moins pour de l'exploration ouverte.\n\n**Utilise des follow-ups**\n\nGrâce à la mémoire :\n- Toi : \"Quel est mon CA Q4 ?\"\n- IA : \"45 000 €\"\n- Toi : \"Et en Q3 ?\"\n- IA : (se souvient du contexte) \"38 000 €\"\n\n**Limite la taille de la Sheet**\n\n- GPT-5 Mini peut lire ~10 000 lignes\n- Au-delà, ça devient lent (5-10 secondes de réponse)\n- Solution : Archive les anciennes données, garde 1 an de data max\n\n**Protège tes données sensibles**\n\nSi la Sheet contient des données confidentielles :\n1. Ajoute une authentification (Basic Auth) sur le webhook n8n\n2. Ou duplique la Sheet et retire les colonnes sensibles\n3. Ou utilise n8n self-hosted (pas sur cloud) pour garder la main\n\n---",
+      "learning": "**Temps gagné par analyse :**\n- Manuelle (formules + pivots) : 10-15 min\n- Avec chatbot : 30 secondes\n- **Gain : 95% de temps**\n\n**Coût :**\n- OpenAI : $10-20/mois (usage intensif)\n- n8n : Gratuit (self-hosted) ou $20/mois (cloud)\n- **Total : $10-40/mois**\n\n**Cas d'usage :**\n- 10 analyses/jour\n- 10 min économisées/analyse\n- 100 min/jour = **25 heures/mois**\n\nSi tu factures $50/h : **$1250 économisés/mois**\n\n**Setup initial :** 15 minutes.\n\n🔥 **Prêt à parler à tes données ?** Importe le workflow et pose ta première question."
+    }
+  },
+  "workflow_json": {
+    "meta": {
+      "instanceId": "a2eaba9e45ad7aab18b25cf863df1e910fb6dd3b85279bde97d9bae4a72f6862",
+      "templateId": "7449"
+    },
+    "nodes": [
+      {
+        "id": "cee2b611-5d08-4328-9c51-096bc979b6f7",
+        "name": "Analyze Data",
+        "type": "n8n-nodes-base.googleSheetsTool",
+        "position": [
+          768,
+          1776
+        ],
+        "parameters": {
+          "options": {},
+          "sheetName": {
+            "__rl": true,
+            "mode": "list",
+            "value": 365710158,
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UDWt0-Z9fHqwnSNfU3vvhSoYCFG6EG3E-ZewJC_CLq4/edit#gid=365710158",
+            "cachedResultName": "Data"
+          },
+          "documentId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "1UDWt0-Z9fHqwnSNfU3vvhSoYCFG6EG3E-ZewJC_CLq4",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UDWt0-Z9fHqwnSNfU3vvhSoYCFG6EG3E-ZewJC_CLq4/edit?usp=drivesdk",
+            "cachedResultName": "Sample Marketing Data - n8n"
+          }
+        },
+        "typeVersion": 4.7
+      },
+      {
+        "id": "8a231798-9b25-457d-a9cd-f4e6286958bb",
+        "name": "OpenAI Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "position": [
+          208,
+          1760
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4.1-nano",
+            "cachedResultName": "gpt-4.1-nano"
+          },
+          "options": {}
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "05badec7-f61b-4492-9fd2-6e571ed12541",
+        "name": "Sticky Note2",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -48,
+          864
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 1152,
+          "height": 1168,
+          "content": "## Talk to Your Data with Google Sheets & OpenAI GPT-5 Mini\nThis n8n workflow template creates an intelligent data analysis chatbot that can answer questions about data stored in Google Sheets using OpenAI's GPT-5 Mini model. The system automatically analyzes your spreadsheet data and provides insights through natural language conversations.\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "3abf3803-0403-4ea1-ac66-373b6821c2a1",
+        "name": "Talk to Your Data",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          688,
+          1136
+        ],
+        "parameters": {
+          "options": {
+            "systemMessage": "Google Sheets Ask-Data \n\n\nYou are Ask-Data. Answer questions using Google Sheets ONLY via the tool below. Be precise and conservative. \n\nThere is only one dataset. dont ask what dataset it is. \n\nUse the data tool to answer the question."
+          },
+          "hasOutputParser": true
+        },
+        "typeVersion": 2.2
+      },
+      {
+        "id": "7736cb8c-0508-4bb5-a92a-850922e00f41",
+        "name": "Sticky Note7",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          0,
+          1024
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 480,
+          "height": 432,
+          "content": "### 3. Ask Questions of Your Data\n\nYou can ask natural language questions to analyze your marketing data, such as:\n- **Total spend** across all campaigns.\n- **Spend for Paid Search only**.\n- **Month-over-month changes** in ad spend.\n- **Top-performing campaigns** by conversion rate.\n- **Cost per lead** for each channel."
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "dc761ff8-ef7b-4535-989b-7d03886bd70c",
+        "name": "Sticky Note8",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -608,
+          864
+        ],
+        "parameters": {
+          "width": 528,
+          "height": 1168,
+          "content": "## 🎥 Watch This Tutorial\n\n@[youtube](qsrVPdo6svc)\n\n\n### 1. Set Up OpenAI Connection\n\n#### Get Your API Key\n1. Visit the [OpenAI API Keys](https://platform.openai.com/api-keys) page.\n2. Go to [OpenAI Billing](https://platform.openai.com/settings/organization/billing/overview).\n3. Add funds to your billing account.\n4. Copy your API key into your **OpenAI credentials** in n8n (or your chosen platform).\n\n---\n### 2. Prepare Your Google Sheet\n\n#### Connect Your Data in Google Sheets\n- Data must follow this format: [Sample Marketing Data](https://docs.google.com/spreadsheets/d/1UDWt0-Z9fHqwnSNfU3vvhSoYCFG6EG3E-ZewJC_CLq4/edit?gid=365710158#gid=365710158)\n- **First row** contains column names.\n- Data should be in **rows 2–100**.\n- Log in using **OAuth**, then select your workbook and sheet.\n\n---\n### 3. Ask Questions of Your Data\n\nYou can ask natural language questions to analyze your marketing data, such as:\n- **Total spend** across all campaigns.\n- **Spend for Paid Search only**.\n- **Month-over-month changes** in ad spend.\n- **Top-performing campaigns** by conversion rate.\n- **Cost per lead** for each channel.\n\n---\n## 📬 Need Help or Want to Customize This?\n📧 [robert@ynteractive.com](mailto:robert@ynteractive.com)  \n🔗 [LinkedIn](https://www.linkedin.com/in/robert-breen-29429625/)\n\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "4137e8dc-aab2-486f-bf23-4a129f5f8241",
+        "name": "Sticky Note9",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          0,
+          1504
+        ],
+        "parameters": {
+          "color": 3,
+          "width": 480,
+          "height": 432,
+          "content": "### 1. Set Up OpenAI Connection\n\n#### Get API Key:\n1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)\n1. Go to [OpenAI Billing](https://platform.openai.com/settings/organization/billing/overview)\n2. Add funds to your billing account & copy your api key into the openAI credentials\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "4c4db6fc-6973-4bb9-8dbd-c02086c25c47",
+        "name": "Sticky Note10",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          544,
+          1504
+        ],
+        "parameters": {
+          "color": 3,
+          "width": 512,
+          "height": 432,
+          "content": "### 2. Prepare Your Google Sheet\n\n#### Connect your Data in Google Sheets\n- Data must be in a format similar to this: [Sample Marketing Data](https://docs.google.com/spreadsheets/d/1UDWt0-Z9fHqwnSNfU3vvhSoYCFG6EG3E-ZewJC_CLq4/edit?gid=365710158#gid=365710158)\n- First row contains column names\n- Data in rows 2-100\n- Log in with OAuth2 and choose your workbook and sheet\n- Optional: Try connecting to Airtable, Notion or your Database"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "75869f50-156d-4723-a128-204c29f1b49d",
+        "name": "Chat with Your Data",
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "position": [
+          176,
+          1296
+        ],
+        "webhookId": "edca0f0a-77c3-43e5-8ece-e514a29446f5",
+        "parameters": {
+          "options": {}
+        },
+        "typeVersion": 1.3
+      },
+      {
+        "id": "81eb1883-633a-4c09-b78c-2999dc9c60be",
+        "name": "Memory",
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "position": [
+          720,
+          1328
+        ],
+        "parameters": {},
+        "typeVersion": 1.3
+      },
+      {
+        "id": "bcf7f68a-0ce7-4a8f-9eed-a2cc5cb9124a",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          544,
+          1024
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 512,
+          "height": 432,
+          "content": ""
+        },
+        "typeVersion": 1
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "Talk to Your Data",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Analyze Data": {
+        "ai_tool": [
+          [
+            {
+              "node": "Talk to Your Data",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Talk to Your Data",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Chat with Your Data": {
+        "main": [
+          [
+            {
+              "node": "Talk to Your Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+}

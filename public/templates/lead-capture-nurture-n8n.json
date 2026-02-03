@@ -1,0 +1,43 @@
+{
+  "metadata": {
+    "id": "003",
+    "slug": "lead-capture-nurture-n8n",
+    "title_en": "Lead Capture → CRM → Email Nurture - B2B",
+    "title_fr": "Capture de leads → CRM → Nurture Email - B2B",
+    "description_short_en": "Complete B2B pipeline: capture web leads, store in Airtable CRM, send welcome email, and nurture with 5-email sequence over 7 days.",
+    "description_short_fr": "Pipeline B2B complet : capturez les leads web, stockez dans Airtable CRM, envoyez un email de bienvenue et nurture avec une séquence de 5 emails sur 7 jours.",
+    "description_full_en": "End-to-end lead management workflow that captures form submissions, validates and cleans data, checks for duplicates in Airtable, creates CRM records, sends immediate welcome email, and executes a 7-day nurture sequence with lead scoring.",
+    "description_full_fr": "### Le circuit automatisé\n\n**1. Formulaire de capture (Webhook)**\nUn formulaire sur ton site capte :\n- Nom complet\n- Email\n- Entreprise\n- Téléphone\n- Message/besoins\n\nEnvoie via POST vers n8n webhook.\n\n**2. Extraction et nettoyage des données**\nLe workflow extrait et nettoie :\n- Email en lowercase et trim\n- Validation format email\n- Normalisation du téléphone\n- Source du lead (website, LinkedIn, ads...)\n\n**3. Check de doublon**\nRequête Airtable :\n- Ce lead existe déjà ?\n- Si oui : met à jour la fiche\n- Si non : crée nouveau contact\n\n**4. Enrichissement du lead (API externe)**\nAppel à Clearbit/Hunter.io (optionnel) :\n- Récupère infos entreprise (taille, secteur, CA...)\n- Photo LinkedIn du contact\n- Score de qualification\n\n**5. Création dans Airtable CRM**\nEnregistre le lead avec :\n- Infos de base (nom, email, entreprise...)\n- Statut : \"New Lead\"\n- Score : à calculer\n- Date de création\n- Source\n\n**6. Email de bienvenue immédiat**\nEnvoie un email automatique :\n- Sujet : \"Merci {{nom}}, on revient vers toi sous 24h\"\n- Corps : Confirmation de réception + next steps\n- CTA : Lien vers calendrier Calendly\n\n**7. Séquence de nurture (7 jours)**\n5 emails programmés :\n- J+1 : \"Voici comment on peut t'aider\"\n- J+3 : Case study client similaire\n- J+5 : Ressource gratuite (guide, template...)\n- J+7 : \"Toujours intéressé ? Réserve un call\"\n- J+10 : Dernier email (dernière chance)\n\n**8. Scoring et qualification**\nBasé sur les interactions :\n- Email ouvert : +10 points\n- Lien cliqué : +20 points\n- Calendly booké : +50 points\n- Réponse email : +30 points\n\nSi score >60 → Lead chaud → Notif Slack à l'équipe sales",
+    "category": "CRM",
+    "complexity": "Intermediate",
+    "tags_en": [
+      "leads",
+      "crm",
+      "airtable",
+      "email",
+      "nurture",
+      "b2b"
+    ],
+    "tags_fr": [
+      "leads",
+      "crm",
+      "airtable",
+      "email",
+      "nurture",
+      "b2b"
+    ],
+    "author": "Agentic Factory",
+    "date": "2024",
+    "url_original": "",
+    "nodes_count": 15,
+    "sections": {
+      "why": "Tu génères des leads sur ton site. Ils remplissent un formulaire. **Et après ? Rien.**\n\n**Le problème :**\n- Formulaire → Email dans ta boîte → Tu oublies\n- Pas de CRM → leads perdus dans le chaos\n- Pas de relance automatique → conversion 5% max\n- Ton concurrent relance en 5 minutes → il te pique le client\n\n**Ce workflow :**\nFormulaire web capte un lead → Enregistre dans Airtable CRM → Envoie email de bienvenue immédiat → Séquence de nurture sur 7 jours → Qualifie le lead (chaud/tiède/froid). **Pipeline B2B complet de A à Z.**\n\n**Ce que tu gagnes :**\n- **Lead response time : 30 secondes** (vs 24h manuel)\n- **CRM centralisé** : tous les leads dans Airtable\n- **Nurture automatique** : 5 emails sur 7 jours\n- **Qualification IA** : score de 0 à 100 par lead\n\n**Pour qui ?**\n- SaaS B2B en early-stage\n- Agences (web, marketing, conseil)\n- Freelances qui veulent professionnaliser\n- Startups sans équipe sales",
+      "description": "### Le circuit automatisé\n\n**1. Formulaire de capture (Webhook)**\nUn formulaire sur ton site capte :\n- Nom complet\n- Email\n- Entreprise\n- Téléphone\n- Message/besoins\n\nEnvoie via POST vers n8n webhook.\n\n**2. Extraction et nettoyage des données**\nLe workflow extrait et nettoie :\n- Email en lowercase et trim\n- Validation format email\n- Normalisation du téléphone\n- Source du lead (website, LinkedIn, ads...)\n\n**3. Check de doublon**\nRequête Airtable :\n- Ce lead existe déjà ?\n- Si oui : met à jour la fiche\n- Si non : crée nouveau contact\n\n**4. Enrichissement du lead (API externe)**\nAppel à Clearbit/Hunter.io (optionnel) :\n- Récupère infos entreprise (taille, secteur, CA...)\n- Photo LinkedIn du contact\n- Score de qualification\n\n**5. Création dans Airtable CRM**\nEnregistre le lead avec :\n- Infos de base (nom, email, entreprise...)\n- Statut : \"New Lead\"\n- Score : à calculer\n- Date de création\n- Source\n\n**6. Email de bienvenue immédiat**\nEnvoie un email automatique :\n- Sujet : \"Merci {{nom}}, on revient vers toi sous 24h\"\n- Corps : Confirmation de réception + next steps\n- CTA : Lien vers calendrier Calendly\n\n**7. Séquence de nurture (7 jours)**\n5 emails programmés :\n- J+1 : \"Voici comment on peut t'aider\"\n- J+3 : Case study client similaire\n- J+5 : Ressource gratuite (guide, template...)\n- J+7 : \"Toujours intéressé ? Réserve un call\"\n- J+10 : Dernier email (dernière chance)\n\n**8. Scoring et qualification**\nBasé sur les interactions :\n- Email ouvert : +10 points\n- Lien cliqué : +20 points\n- Calendly booké : +50 points\n- Réponse email : +30 points\n\nSi score >60 → Lead chaud → Notif Slack à l'équipe sales",
+      "installation": "### Prérequis\n- [ ] n8n installé\n- [ ] Base Airtable (gratuit)\n- [ ] Compte SendGrid ou Gmail\n- [ ] Formulaire sur ton site (Typeform, Google Forms, custom...)",
+      "usage": "### Scénario 1 : SaaS B2B early-stage\n**Situation :** 50 leads/mois depuis landing page. Tu n'as pas de sales rep.\n\n**Setup :**\n1. Active le workflow\n2. Connecte formulaire landing page\n3. Configure 5 emails de nurture focus sur le produit\n4. Ajoute lien Calendly pour démo\n\n**Résultat automatique :**\n- 50 leads → 25 ouvrent email 1 (50%)\n- 15 cliquent lien (30%)\n- 5 bookent démo (10%)\n- 2 signent (4% conversion finale)\n\n**ROI :** 2 clients/mois × €1000 MRR = €2000 MRR gagné en autopilot.",
+      "tips": "**Lead response time = clé #1**\n- Les leads qui reçoivent un email <5 min convertissent 7× mieux\n- Active les notifications Slack : \"Nouveau lead {{nom}} !\"\n- Si high-ticket, appelle en plus de l'email\n\n**Segmente par source**\n- Google Ads (intent fort) → email direct \"Réserve ta démo\"\n- LinkedIn (discovery) → email éduc \"Voici comment ça marche\"\n- Referral (confiance) → email relationnel \"{{referrer}} nous a parlé de toi\"\n\n**A/B teste tes emails**\n- Sujet : Question vs Affirmation\n- Longueur : 100 mots vs 300 mots\n- CTA : \"Réserve un call\" vs \"Télécharge le guide\"\n\n**Utilise Airtable Views**\n- Vue \"Hot Leads\" : Score >60\n- Vue \"Needs Follow-up\" : Pas de réponse depuis 7 jours\n- Vue \"Lost\" : Score <20 après J+10\n\n**Nurture ≠ Spam**\n- Max 5 emails sur 10 jours\n- Unsubscribe link dans chaque email\n- Arrête si le lead répond \"pas intéressé\"\n\n**Intègre avec ton CRM existant**\nSi tu as déjà Pipedrive/HubSpot/Salesforce :\n- Remplace Airtable par ton CRM (nodes natifs n8n)\n- Garde le reste du workflow identique",
+      "learning": "✅ Créer des webhooks pour capturer des formulaires\n✅ Valider et nettoyer des données entrantes\n✅ Interagir avec Airtable comme CRM\n✅ Envoyer des emails transactionnels\n✅ Créer des séquences de nurture avec délais\n✅ Implémenter du lead scoring\n✅ Utiliser des conditions pour router les leads\n✅ Notifier des équipes via Slack/Discord\n\n**Temps d'installation :** 45 minutes\n**Niveau de difficulté :** Intermédiaire\n**ROI :** 4-10% de conversion lead → client\n\n🔥 **Prêt à automatiser ton pipeline ?** Importe le workflow et connecte ton formulaire."
+    }
+  },
+  "workflow_json": null
+}

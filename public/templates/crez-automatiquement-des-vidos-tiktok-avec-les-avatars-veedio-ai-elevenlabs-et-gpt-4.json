@@ -1,0 +1,1444 @@
+{
+  "metadata": {
+    "id": "002",
+    "slug": "crez-automatiquement-des-vidos-tiktok-avec-les-avatars-veedio-ai-elevenlabs-et-gpt-4",
+    "title_en": "Auto-Create TikTok Videos with VEED.io AI Avatars, ElevenLabs & GPT-4",
+    "title_fr": "Créez automatiquement des vidéos TikTok avec les avatars VEED.io AI, ElevenLabs et GPT-4",
+    "description_short_en": "Auto-create viral TikTok videos with your AI avatar—no filming needed. Trend analysis, voiceover, captions & posting, all in one seamless workflow. Learn more!",
+    "description_short_fr": "Créez automatiquement des vidéos virales TikTok avec votre avatar IA, aucun tournage n'est nécessaire. Analyse des tendances, voix off, sous-titres et publication, le tout dans un seul flux de travail transparent. Apprendre encore plus!",
+    "description_full_en": "Auto-Create TikTok Videos with VEED.io AI Avatars, ElevenLabs & GPT-4\n1. Workflow Overview\nThis workflow automates the creation and publishing of viral TikTok videos using a photo and theme input sent via Telegram. It leverages AI technologies including Perplexity for trend research, GPT-4 for script and caption generation, ElevenLabs for voice synthesis, and FAL.ai (VEED.io) for video creation from images and audio. Finally, it publishes the generated content across multiple social platforms and logs the data in Google Sheets.\nThe workflow is logically grouped into these blocks:\n1.1 Input Reception:\nReceives photo and caption/theme via Telegram.\n1.2 Trend Research:\nUses Perplexity API to identify trending topics related to the input theme.\n1.3 Script Generation:\nGPT-4 creates a short viral TikTok script based on trends.\n1.4 Voice Synthesis:\nElevenLabs converts the script text to natural speech audio.\n1.5 Audio and Image Upload:\nUploads audio and photo to public URLs for processing.\n1.6 Video Generation:\nFAL.ai generates a talking video using the photo and synthesized audio.\n1.7 Caption Generation:\nGPT-4 composes an engaging TikTok caption with hashtags.\n1.8 Data Logging:\nSaves all media URLs, captions, and status to Google Sheets for tracking.\n1.9 Publishing:\nPublishes the video and caption to TikTok and other social media using the Blotato node.\n1.10 Status Update:\nMarks the workflow run as DONE in the Google Sheet.\n1.11 User Guidance:\nSticky notes provide setup instructions and explanations.\n2. Block-by-Block Analysis\n1.1 Input Reception\nOverview:\nStarts the workflow by triggering on incoming Telegram messages containing a photo and optional caption/theme.\nNodes Involved:\nTelegram Trigger\nWorkflow Configuration\nExtract Photo and Theme\nGet Photo File from Telegram\nNode Details:\nTelegram Trigger\nType: Telegram Trigger\nRole: Listens for new Telegram messages (photo with caption or text) to start workflow.\nConfiguration: Triggers on \"message\" updates only. Uses Telegram API credentials.\nInputs: Telegram messages\nOutputs: Message JSON including photo file IDs and captions\nEdge Cases: Missing photo or caption leads to empty variables; no trigger if message is not a photo or text.\nWorkflow Configuration\nType: Set\nRole: Sets essential API keys and configuration variables (ElevenLabs API key, voice ID, FAL.ai API key, script max duration, Perplexity model).\nConfiguration: Static assignment of credentials and parameters to workflow context.\nInputs: Trigger output\nOutputs: JSON with configuration variables\nEdge Cases: Missing or invalid API keys will cause downstream API calls to fail.\nExtract Photo and Theme\nType: Set\nRole: Extracts the Telegram photo file ID and theme (caption or text) from the incoming message.\nConfiguration:\nphotoUrl: last photo file_id if any, else empty string\ntheme: message caption or text or defaults to \"viral content\"\nInputs: Workflow Configuration output\nOutputs: JSON with photoUrl and theme\nEdge Cases: No photo attached results in empty photoUrl; empty theme defaults to \"viral content\".\nGet Photo File from Telegram\nType: Telegram\nRole: Downloads the actual photo file from Telegram servers using the file ID.\nConfiguration: Uses photoUrl extracted above as fileId parameter.\nInputs: Extract Photo and Theme output\nOutputs: Binary photo file data\nEdge Cases: Telegram API failures, invalid file ID, or missing photo cause download failure.\n1.2 Trend Research\nOverview:\nQueries Perplexity API to find top 3 current viral TikTok trends related to the photo caption/theme.\nNodes Involved:\nBuild Public Image URL\nSearch Trends with Perplexity\nNode Details:\nBuild Public Image URL\nType: HTTP Request (POST multipart-form-data)\nRole: Uploads the downloaded photo binary to tmpfiles.org to get a public URL.\nConfiguration: Uploads photo binary under \"data\" field.\nInputs: Get Photo File from Telegram output (binary photo)\nOutputs: JSON containing public URL for the image\nEdge Cases: Upload failures or temporary URL downtime.\nSearch Trends with Perplexity\nType: Perplexity API\nRole: Performs AI-powered search for top 3 viral trends on TikTok related to the photo’s theme.\nConfiguration:\nModel: dynamically set from Workflow Configuration (e.g., \"sonar\")\nPrompt: Finds top 3 viral trends, hashtags, content styles related to caption.\nInputs: Build Public Image URL output (uses caption from Extract Photo and Theme)\nOutputs: JSON with trends as string content in response\nEdge Cases: API rate limits, invalid API key, or no relevant trends found.\n1.3 Script Generation\nOverview:\nGenerates a concise, engaging TikTok script (max 30 seconds) based on the trends found.\nNodes Involved:\nGenerate Script with GPT-4\nNode Details:\nGenerate Script with GPT-4\nType: OpenAI API (GPT-4) via LangChain node\nRole: Creates a viral TikTok script using the trend data and theme.\nConfiguration:\nModel: \"gpt-4o-mini\" (GPT-4 optimized)\nPrompt instructs to create a max 30-second script with a hook, conversational style optimized for voice synthesis.\nInputs: Search Trends with Perplexity output (trends content) and Extract Photo and Theme (theme)\nOutputs: JSON with generated script text\nEdge Cases: API quota exceeded, prompt failures, or nonsensical script output.\n1.4 Voice Synthesis\nOverview:\nConverts the generated script text into natural sounding speech audio (MP3) via ElevenLabs API.\nNodes Involved:\nElevenLabs Voice Synthesis\nConvert .mpga to .mp3\nUpload Audio to Public URL\nNode Details:\nElevenLabs Voice Synthesis\nType: HTTP Request (POST)\nRole: Sends script text to ElevenLabs TTS API to generate voice audio.\nConfiguration:\nURL composed dynamically with voice ID from Workflow Configuration\nJSON body includes text, model id \"eleven_multilingual_v2\", voice stability and similarity settings\nHeaders include xi-api-key for authentication\nInputs: Generate Script with GPT-4 output (script text)\nOutputs: Binary audio in MPGA format (audio/mpeg)\nEdge Cases: API key invalid, network timeout, audio format issues.\nConvert .mpga to .mp3\nType: Code\nRole: Renames binary audio file extension from .mpga to .mp3 and sets MIME type.\nConfiguration: JavaScript code updates binary property name and metadata.\nInputs: ElevenLabs Voice Synthesis binary audio\nOutputs: Binary audio renamed as .mp3\nEdge Cases: Missing binary data causes no conversion.\nUpload Audio to Public URL\nType: HTTP Request (POST multipart-form-data)\nRole: Uploads the mp3 audio file to tmpfiles.org to get a public URL.\nConfiguration: Form data includes the mp3 binary under \"file\".\nInputs: Convert .mpga to .mp3 output (binary audio_mp3)\nOutputs: JSON with public audio URL\nEdge Cases: Upload failure or URL expiration.\n1.5 Video Generation\nOverview:\nGenerates a lip-synced talking video using the uploaded photo and audio via FAL.ai (VEED Fabric 1.0 model).\nNodes Involved:\nFAL.ai Video Generation\nWait for VEED\nDownload VEED Video\nNode Details:\nFAL.ai Video Generation\nType: HTTP Request (POST)\nRole: Sends a request to FAL.ai endpoint to generate video with image and audio URLs.\nConfiguration:\nJSON body includes public image and audio URLs (converted to tmpfiles.org download links), resolution set to 480p\nAuthorization header uses FAL API key from Workflow Configuration\nInputs: Upload Audio to Public URL output (audio URL) and Build Public Image URL (image URL)\nOutputs: JSON response with request_id for video generation\nEdge Cases: API errors, invalid URLs, or processing delays.\nWait for VEED\nType: Wait\nRole: Pauses workflow for 10 minutes to allow video processing to complete asynchronously.\nConfiguration: Wait duration set to 10 minutes\nInputs: FAL.ai Video Generation output\nOutputs: Passes data forward after delay\nEdge Cases: Fixed wait time may be inefficient if processing is faster/slower.\nDownload VEED Video\nType: HTTP Request (GET)\nRole: Retrieves the generated video file from FAL.ai using the request_id.\nConfiguration:\nURL dynamically built with request_id from previous node\nAuthorization header with FAL API key\nInputs: Wait for VEED output\nOutputs: JSON containing video URL\nEdge Cases: Video not ready, 404 errors, or API failures.\n1.6 Caption Generation\nOverview:\nCreates an engaging TikTok caption optimized for algorithms, including trending hashtags.\nNodes Involved:\nGenerate Caption with GPT-4\nNode Details:\nGenerate Caption with GPT-4\nType: OpenAI API (GPT-4) via LangChain node\nRole: Generates a catchy caption based on the theme and discovered trends.\nConfiguration:\nModel: \"gpt-4o-mini\"\nPrompt requests a catchy hook, 5-8 trending hashtags, concise and engaging text optimized for TikTok.\nInputs: Download VEED Video output (to confirm video is ready), Extract Photo and Theme, Search Trends with Perplexity (trends)\nOutputs: Caption text JSON\nEdge Cases: API quota, prompt failure, or irrelevant captions.\n1.7 Data Logging\nOverview:\nSaves the idea, caption, media URLs, and workflow status into a Google Sheets document for tracking.\nNodes Involved:\nSave to Google Sheets\nUpdate Status to \"DONE\"\nNode Details:\nSave to Google Sheets\nType: Google Sheets node\nRole: Appends new row with the TikTok idea (caption), generated caption text, audio/image/video URLs.\nConfiguration:\nDocument ID and Sheet Name dynamically set\nMapping fields: IDEA, CAPTION, URL AUDIO, URL IMAGE, URL VIDEO\nInputs: Generate Caption with GPT-4 output\nOutputs: Confirmation of row addition with data\nEdge Cases: Google API auth failures, quota exceeded, or invalid sheet format.\nUpdate Status to \"DONE\"\nType: Google Sheets node\nRole: Updates the STATUS field to \"DONE\" for the processed video entry.\nConfiguration:\nMatches rows based on URL VIDEO\nAppends or updates existing rows\nInputs: Merge node output (after publishing)\nOutputs: Confirmation of update\nEdge Cases: Mismatched URL keys, Google API errors.\n1.8 Publishing\nOverview:\nUploads the generated video and caption to TikTok and multiple other social media platforms via the Blotato community node.\nNodes Involved:\nSend a video (Telegram)\nUpload Video to BLOTATO\nTiktok\nLinkedin\nFacebook\nInstagram\nTwitter (X)\nYoutube\nThreads\nBluesky\nPinterest\nMerge1\nNode Details:\nSend a video (Telegram)\nType: Telegram\nRole: Sends the generated video back to the user on Telegram chat.\nConfiguration: Uses chat ID from Telegram Trigger node and video URL from Google Sheets data.\nInputs: Save to Google Sheets output\nOutputs: Confirmation of video sent\nEdge Cases: Telegram API limits or invalid chat ID.\nUpload Video to BLOTATO\nType: Blotato Node (Community)\nRole: Uploads video to Blotato platform for social media publishing.\nConfiguration: Uses video URL from Google Sheets data.\nInputs: Save to Google Sheets output\nOutputs: Media ID for publishing nodes\nEdge Cases: Blotato API auth errors or upload failures.\nSocial Media Publishing Nodes (Tiktok, Linkedin, Facebook, Instagram, Twitter (X), Youtube, Threads, Bluesky, Pinterest)\nType: Blotato Node (Community)\nRole: Publishes the video with caption to respective platform using Blotato API.\nConfiguration:\nPlatform specified (e.g., \"tiktok\")\nAccount ID selected from cached accounts\nCaption text from Google Sheets\nMedia URL from Upload Video to BLOTATO node\nInputs: Upload Video to BLOTATO output\nOutputs: Post confirmation\nEdge Cases: Credential expiry, platform posting limits, content policy rejection.\nMerge1\nType: Merge\nRole: Combines outputs from all social media publishing nodes to continue workflow.\nConfiguration: Choose branch mode with 9 inputs\nInputs: All social publishing nodes\nOutputs: Combined data for status update\nEdge Cases: Partial publishing failures or node errors.\n1.9 User Guidance\nOverview:\nSticky notes provide detailed setup instructions and explanations for each step of the workflow including API key configuration, Telegram bot setup, AI processing, voice/video generation, publishing, and usage flow.\nNodes Involved:\nSetup Guide - Start Here\nStep 1 - Telegram Setup\nStep 2 - API Keys Configuration\nStep 3 - AI Processing\nStep 4 - Voice & Video Generation\nStep 5 - Publishing\nHow It Works\nNode Details:\nAll are sticky note nodes with detailed textual instructions and helpful links for setting up the workflow and credentials. They guide users through:\nCreating Telegram bot and setting up trigger.\nConfiguring all required API keys (ElevenLabs, FAL.ai, OpenAI, Perplexity, Google Sheets).\nAI nodes usage and models.\nVoice and video generation details.\nPublishing via Blotato node community plugin with supported platforms.\nOverall workflow operation and expected results.\n3. Summary Table\nNode Name\nNode Type\nFunctional Role\nInput Node(s)\nOutput Node(s)\nSticky Note\nTelegram Trigger\nTelegram Trigger\nStart workflow on Telegram message\n-\nWorkflow Configuration\n# 📱 STEP 1: TELEGRAM BOT SETUP (detailed setup instructions)\nWorkflow Configuration\nSet\nStores API keys and config variables\nTelegram Trigger\nExtract Photo and Theme\n# 🔑 STEP 2: API KEYS CONFIGURATION (API keys setup instructions)\nExtract Photo and Theme\nSet\nExtract photo file ID and theme\nWorkflow Configuration\nGet Photo File from Telegram\nGet Photo File from Telegram\nTelegram\nDownloads photo from Telegram\nExtract Photo and Theme\nBuild Public Image URL\nBuild Public Image URL\nHTTP Request\nUploads photo to public URL\nGet Photo File from Telegram\nSearch Trends with Perplexity\nSearch Trends with Perplexity\nPerplexity API\nFinds viral TikTok trends\nBuild Public Image URL\nGenerate Script with GPT-4\n# 🤖 STEP 3: AI PROCESSING SETUP (Perplexity and OpenAI details)\nGenerate Script with GPT-4\nOpenAI (LangChain)\nCreates TikTok script\nSearch Trends with Perplexity\nElevenLabs Voice Synthesis\nElevenLabs Voice Synthesis\nHTTP Request\nConverts script text to speech\nGenerate Script with GPT-4\nConvert .mpga to .mp3\n# 🎬 STEP 4: VOICE & VIDEO GENERATION (ElevenLabs and FAL.ai APIs explanation)\nConvert .mpga to .mp3\nCode\nRenames audio binary to .mp3\nElevenLabs Voice Synthesis\nUpload Audio to Public URL\nUpload Audio to Public URL\nHTTP Request\nUploads audio file to public URL\nConvert .mpga to .mp3\nFAL.ai Video Generation\nFAL.ai Video Generation\nHTTP Request\nRequests talking video generation\nUpload Audio to Public URL\nWait for VEED\nWait for VEED\nWait\nWaits for video processing\nFAL.ai Video Generation\nDownload VEED Video\nDownload VEED Video\nHTTP Request\nDownloads generated video\nWait for VEED\nGenerate Caption with GPT-4\nGenerate Caption with GPT-4\nOpenAI (LangChain)\nCreates TikTok caption\nDownload VEED Video\nSave to Google Sheets\nSave to Google Sheets\nGoogle Sheets\nLogs idea, caption, media URLs\nGenerate Caption with GPT-4\nSend a video, Upload Video to BLOTATO\nSend a video\nTelegram\nSends generated video on Telegram\nSave to Google Sheets\nUpload Video to BLOTATO\nUpload Video to BLOTATO\nBlotato Node\nUploads video for social publishing\nSave to Google Sheets\nSocial media publishing nodes\n# 📤 STEP 5: PUBLISHING & TRACKING (Blotato installation and publishing instructions)\nTiktok\nBlotato Node\nPublishes video to TikTok\nUpload Video to BLOTATO\nMerge1\nLinkedin\nBlotato Node\nPublishes video to LinkedIn\nUpload Video to BLOTATO\nMerge1\nFacebook\nBlotato Node\nPublishes video to Facebook\nUpload Video to BLOTATO\nMerge1\nInstagram\nBlotato Node\nPublishes video to Instagram\nUpload Video to BLOTATO\nMerge1\nTwitter (X)\nBlotato Node\nPublishes video to Twitter (X)\nUpload Video to BLOTATO\nMerge1\nYoutube\nBlotato Node\nPublishes video to YouTube\nUpload Video to BLOTATO\nMerge1\nThreads\nBlotato Node\nPublishes video to Threads\nUpload Video to BLOTATO\nMerge1\nBluesky\nBlotato Node\nPublishes video to Bluesky\nUpload Video to BLOTATO\nMerge1\nPinterest\nBlotato Node\nPublishes video to Pinterest\nUpload Video to BLOTATO\nMerge1\nMerge1\nMerge\nCombines all social publishing outputs\nAll social publishing nodes\nUpdate Status to \"DONE\"\nUpdate Status to \"DONE\"\nGoogle Sheets\nUpdates Google Sheet status to DONE\nMerge1\n-\nSetup Guide - Start Here\nSticky Note\nProvides full setup guide\n-\n-\nContains full setup guide, tutorial links, and contact info.\nStep 1 - Telegram Setup\nSticky Note\nTelegram bot setup instructions\n-\n-\nDetailed Telegram bot creation and trigger node instructions.\nStep 2 - API Keys Configuration\nSticky Note\nAPI keys configuration instructions\n-\n-\nInstructions to set ElevenLabs, FAL.ai, and other API keys.\nStep 3 - AI Processing\nSticky Note\nAI nodes setup guidance\n-\n-\nDetails on Perplexity, OpenAI, and FAL.ai API usage.\nStep 4 - Voice & Video Generation\nSticky Note\nVoice and video generation overview\n-\n-\nExplains ElevenLabs and FAL.ai nodes, no config needed.\nStep 5 - Publishing\nSticky Note\nPublishing & tracking instructions\n-\n-\nBlotato node installation and publishing setup instructions with links.\nHow It Works\nSticky Note\nWorkflow flow summary\n-\n-\nStepwise functional overview with timing and usage example.\n4. Reproducing the Workflow from Scratch\nCreate Telegram Trigger Node\nType: Telegram Trigger\nSet to trigger on \"message\" updates (photo or text).\nAdd Telegram API credentials (Bot token).\nActivate webhook.\nAdd Workflow Configuration Node (Set)\nCreate a \"Set\" node to store:\nelevenLabsApiKey\n(string)\nelevenLabsVoiceId\n(string)\nfalApiKey\n(string)\nscriptMaxDuration\n(number, default 30)\nperplexityModel\n(string, e.g., \"sonar\")\nNo input required; connects from Telegram Trigger.\nAdd Extract Photo and Theme Node (Set)\nExtract last photo file_id from incoming message JSON:\n{{$json.message.photo ? $json.message.photo[$json.message.photo.length - 1].file_id : ''}}\nExtract theme from caption or text or default \"viral content\":\n{{$json.message.caption || $json.message.text || 'viral content'}}\nConnect from Workflow Configuration node.\nAdd Get Photo File from Telegram Node\nType: Telegram\nResource: File\nParameter:\nfileId\nset to\n{{$json.photoUrl}}\nUse Telegram API credentials\nConnect from Extract Photo and Theme.\nAdd Build Public Image URL Node (HTTP Request)\nMethod: POST\nURL:\nhttps://tmpfiles.org/api/v1/upload\nBody: multipart-form-data, field name \"data\" with binary photo file from previous node\nResponse format: JSON expected\nConnect from Get Photo File from Telegram.\nAdd Search Trends with Perplexity Node\nUse Perplexity API node with API key credentials\nModel: set from Workflow Configuration node (e.g.,\n{{$node[\"Workflow Configuration\"].json.perplexityModel}}\n)\nMessage prompt: \"Find top 3 current viral trends related to: {{caption}}...\" (use caption from Extract Photo and Theme)\nConnect from Build Public Image URL.\nAdd Generate Script with GPT-4 Node (OpenAI)\nUse OpenAI API credentials\nModel: \"gpt-4o-mini\"\nPrompt: Create viral 30-second TikTok script based on trends and theme, with hook and optimized for voice synthesis.\nConnect from Search Trends with Perplexity.\nAdd ElevenLabs Voice Synthesis Node (HTTP Request)\nPOST to\nhttps://api.elevenlabs.io/v1/text-to-speech/{voiceId}\nwhere voiceId from Workflow Configuration\nBody JSON:\n{text: script text, model_id: \"eleven_multilingual_v2\", voice_settings: {...}}\nHeaders: xi-api-key from Workflow Configuration, Content-Type\napplication/json\n, Accept\naudio/mpeg\nConnect from Generate Script with GPT-4.\nAdd Convert .mpga to .mp3 Node (Code)\nJavaScript code to rename binary audio file extension from .mpga to .mp3 and set MIME type\nConnect from ElevenLabs Voice Synthesis.\nAdd Upload Audio to Public URL Node (HTTP Request)\nPOST to\nhttps://tmpfiles.org/api/v1/upload\nmultipart-form-data with \"file\" field from previous node binary audio_mp3\nResponse: JSON\nConnect from Convert .mpga to .mp3.\nAdd FAL.ai Video Generation Node (HTTP Request)\nPOST to\nhttps://queue.fal.run/veed/fabric-1.0\nHeader Authorization with FAL API key from Workflow Configuration\nBody JSON with:\nimage_url: public image URL replacing tmpfiles.org link to download link\naudio_url: public audio URL replacing tmpfiles.org link to download link\nresolution: \"480p\"\nConnect from Upload Audio to Public URL.\nAdd Wait for VEED Node (Wait)\nWait 10 minutes for video generation\nConnect from FAL.ai Video Generation.\nAdd Download VEED Video Node (HTTP Request)\nGET to\nhttps://queue.fal.run/veed/fabric-1.0/requests/{request_id}\nfrom previous node response\nHeader Authorization with FAL API key\nConnect from Wait for VEED.\nAdd Generate Caption with GPT-4 Node (OpenAI)\nUse OpenAI API credentials\nModel: \"gpt-4o-mini\"\nPrompt: Create engaging caption with trending hashtags based on theme and trends\nConnect from Download VEED Video.\nAdd Save to Google Sheets Node\nGoogle Sheets OAuth2 credential setup\nDocument ID and Sheet Name configured\nAppend row with columns: IDEA (caption), CAPTION (generated caption), URL AUDIO, URL IMAGE, URL VIDEO\nConnect from Generate Caption with GPT-4.\nAdd Send a video Node (Telegram)\nOperation: Send Video\nChat ID from Telegram Trigger message chat id\nFile URL from Google Sheets URL VIDEO column\nConnect from Save to Google Sheets.\nAdd Upload Video to BLOTATO Node\nUse Blotato API credentials\nUpload video URL from Google Sheets URL VIDEO\nConnect from Save to Google Sheets.\nAdd Social Media Publishing Nodes (Tiktok, Linkedin, Facebook, Instagram, Twitter (X), Youtube, Threads, Bluesky, Pinterest)\nUse Blotato API credentials\nPlatform set accordingly\nAccount IDs selected from dashboard\nCaption text from Google Sheets CAPTION\nMedia URL from Upload Video to BLOTATO\nAll connect from Upload Video to BLOTATO node.\nAdd Merge Node (Merge1)\nMode: Choose Branch\nInputs: all social publishing nodes (9 inputs)\nConnect all social publishing nodes outputs to Merge1.\nAdd Update Status to \"DONE\" Node (Google Sheets)\nGoogle Sheets OAuth2 configured\nAppend or update row matching on URL VIDEO column\nSet STATUS field to \"DONE\"\nConnect from Merge1 output.\nAdd Sticky Notes\nAdd multiple sticky notes for guidance:\nSetup Guide - Start Here\nStep 1 - Telegram Setup\nStep 2 - API Keys Configuration\nStep 3 - AI Processing Setup\nStep 4 - Voice & Video Generation\nStep 5 - Publishing & Tracking\nHow It Works (workflow summary)\n5. General Notes & Resources\nNote Content\nContext or Link\nWorkflow transforms photo + theme sent via Telegram into viral TikTok videos automatically.\nGeneral workflow purpose.\nSetup guide video on YouTube:\nhttps://youtu.be/YykmUeGVb9U\nSetup Guide sticky note.\nGoogle Sheets setup tutorial:\nhttps://youtu.be/fDzVmdw7bNU\nAPI keys and credentials configuration instructions.\nSample Google Sheets data template:\nSheet Link\nGoogle Sheets data format for logging.\nBlotato node and API:\nhttps://blotato.com/?ref=firas\nUsed for multi-platform social media publishing.\nContact for support and consulting: LinkedIn -\nhttps://www.linkedin.com/in/dr-firas/\nSupport channels provided in sticky notes.\nContact for support and consulting: YouTube -\nhttps://www.youtube.com/@DRFIRASS\nSupport channels provided in sticky notes.\nDisclaimer:\nThe text provided is exclusively extracted from an automated workflow created with n8n, complying strictly with content policies and containing no illegal, offensive, or protected elements. All processed data is legal and public.\nCopied to clipboard",
+    "description_full_fr": "### Le pipeline complet\n\n**1. Génération du script (GPT-4)**\n\nInput : Ton sujet/produit/message\nExemple : \"Vidéo sur les bienfaits du café matcha\"\n\nGPT-4 génère :\n- Hook accrocheur (3 premières secondes)\n- Corps du message (storytelling, bénéfices)\n- CTA (call-to-action)\n- Durée : 30-60 secondes (optimal TikTok)\n\n**2. Sélection de l'avatar (Veedio AI)**\n\nBibliothèque de 50+ avatars :\n- Homme/Femme\n- Âges divers (20-60 ans)\n- Ethnies variées\n- Styles (casual, pro, sportif...)\n\n**Ou** : Upload une photo et Veedio crée un avatar custom.\n\n**3. Génération de la voix (ElevenLabs)**\n\n- 100+ voix ultra-réalistes\n- Émotions configurables (enthousiaste, calme, sérieux...)\n- Multi-langues (français, anglais, espagnol...)\n- Option : Clone TA voix (upload 1 min d'audio)\n\n**4. Création de la vidéo (Veedio AI)**\n\n- L'avatar \"parle\" le script avec sync labial parfait\n- Mouvements naturels (clignements, micro-expressions)\n- Fond configurable (uni, bureau, extérieur...)\n- Export vertical 9:16 (TikTok-ready)\n\n**Temps de génération : 5-8 minutes**\n\n**5. Upload automatique TikTok (Postiz)**\n\n- Titre généré par GPT (SEO-optimized)\n- Hashtags auto-ajoutés\n- Publication immédiate ou programmée\n\n---",
+    "category": "AI",
+    "complexity": "Advanced",
+    "tags_en": [],
+    "tags_fr": [],
+    "author": "Dr. Firas",
+    "date": "Unknown",
+    "url_original": "https://n8nworkflows.xyz/workflows/auto-create-tiktok-videos-with-veedio-ai-avatars-elevenlabs-gpt-4-10000",
+    "nodes_count": 35,
+    "sections": {
+      "why": "**Coût par vidéo :**\n- Veedio : $1/vidéo (plan 50 vidéos)\n- ElevenLabs : $0.20/vidéo\n- OpenAI script : $0.05/vidéo\n- Postiz : $1/vidéo\n- **Total : $2.25/vidéo**\n\n**Comparé à :**\n- Vidéo maison (toi face caméra) : Gratuit mais 2h de prod\n- Influenceur/comédien : $500/vidéo\n- Agence vidéo : $1000-2000/vidéo\n\n**Pour 30 vidéos/mois :**\n- Coût workflow : $67\n- Coût influenceurs : $15 000\n- **Économie : $14 933 (99.5%)**\n\n**Temps :**\n- Setup : 1h\n- Par vidéo : 10 min (dont 8 min d'attente génération)\n- 30 vidéos = 5h de travail actif\n\n🔥 **Prêt à créer des talking heads IA ?** Importe le workflow et génère ta première vidéo avatar.",
+      "description": "### Le pipeline complet\n\n**1. Génération du script (GPT-4)**\n\nInput : Ton sujet/produit/message\nExemple : \"Vidéo sur les bienfaits du café matcha\"\n\nGPT-4 génère :\n- Hook accrocheur (3 premières secondes)\n- Corps du message (storytelling, bénéfices)\n- CTA (call-to-action)\n- Durée : 30-60 secondes (optimal TikTok)\n\n**2. Sélection de l'avatar (Veedio AI)**\n\nBibliothèque de 50+ avatars :\n- Homme/Femme\n- Âges divers (20-60 ans)\n- Ethnies variées\n- Styles (casual, pro, sportif...)\n\n**Ou** : Upload une photo et Veedio crée un avatar custom.\n\n**3. Génération de la voix (ElevenLabs)**\n\n- 100+ voix ultra-réalistes\n- Émotions configurables (enthousiaste, calme, sérieux...)\n- Multi-langues (français, anglais, espagnol...)\n- Option : Clone TA voix (upload 1 min d'audio)\n\n**4. Création de la vidéo (Veedio AI)**\n\n- L'avatar \"parle\" le script avec sync labial parfait\n- Mouvements naturels (clignements, micro-expressions)\n- Fond configurable (uni, bureau, extérieur...)\n- Export vertical 9:16 (TikTok-ready)\n\n**Temps de génération : 5-8 minutes**\n\n**5. Upload automatique TikTok (Postiz)**\n\n- Titre généré par GPT (SEO-optimized)\n- Hashtags auto-ajoutés\n- Publication immédiate ou programmée\n\n---",
+      "installation": "### Prérequis\n- [ ] n8n **self-hosted** (Postiz = community node)\n- [ ] Compte Veedio AI ($49/mois - 50 vidéos incluses)\n- [ ] Compte ElevenLabs ($5/mois - 10K chars audio)\n- [ ] Compte Postiz ($29/mois - multi-plateformes)\n- [ ] API Key OpenAI (GPT-4)",
+      "usage": "### Scénario 1 : Marque e-commerce (reviews produits)\n**Situation :** Tu vends des gadgets tech. Tu veux des vidéos de reviews.\n\n**Process :**\n1. Input : \"Review du chargeur sans fil X3000\"\n2. GPT génère un script :\n```\n\"Tu recharges encore ton téléphone avec un câble en 2024 ? (pause)\nLaisse-moi te présenter le X3000, le chargeur sans fil le plus rapide du marché.\n[3 bénéfices]\nLien en bio pour -20% cette semaine !\"\n```\n3. Avatar féminin, 30 ans, ton enthousiaste\n4. Post sur TikTok\n\n**Résultat :** 7 vidéos reviews/semaine. Coût : $3/vidéo vs $500 avec un influenceur.\n\n---",
+      "tips": "**Choisis le bon avatar pour ta cible**\n\n- **B2C jeune (18-30 ans)** : Avatar casual, 25 ans, souriant\n- **B2B / Pro** : Avatar costume, 35-45 ans, sérieux\n- **Wellness / Santé** : Avatar sportif, lumière naturelle\n- **Tech / Gadgets** : Avatar moderne, fond minimaliste\n\n**Optimise le script pour TikTok**\n\n**❌ Mauvais script :**\n\"Bonjour, aujourd'hui je vais vous parler des avantages du produit X...\"\n\n**✅ Bon script :**\n\"Tu perds 2h/jour à cause de ce problème. (pause) Voici la solution en 30 secondes.\"\n\n**Règles d'or :**\n- Hook = 3 premières secondes (stat choc, question, promesse)\n- Phrases courtes (10-15 mots max)\n- Pas de transition corporate (\"donc\", \"ensuite\", \"par conséquent\"...)\n- CTA clair en fin (lien en bio, commente, partage...)\n\n**Varie les avatars pour éviter la lassitude**\n\nSi tu postes 1 vidéo/jour, change d'avatar tous les 5-7 posts. Sinon, ton audience va \"skipper\" en reconnaissant le même visage.\n\n**Clone ta propre voix pour plus d'authenticité**\n\nElevenLabs permet de cloner ta voix :\n1. Enregistre 1-2 min de toi qui parles\n2. Upload dans ElevenLabs > Voice Lab > Create\n3. Utilise cette voix custom pour tous tes avatars\n\n**Résultat :** Les gens entendent TA voix avec un avatar différent = meilleur engagement.\n\n**Ajoute des sous-titres automatiques**\n\nTikTok adore les sous-titres (80% des gens regardent sans son). Ajoute un node \"Generate Subtitles\" (Whisper AI) avant l'upload.\n\n---",
+      "learning": "**Coût par vidéo :**\n- Veedio : $1/vidéo (plan 50 vidéos)\n- ElevenLabs : $0.20/vidéo\n- OpenAI script : $0.05/vidéo\n- Postiz : $1/vidéo\n- **Total : $2.25/vidéo**\n\n**Comparé à :**\n- Vidéo maison (toi face caméra) : Gratuit mais 2h de prod\n- Influenceur/comédien : $500/vidéo\n- Agence vidéo : $1000-2000/vidéo\n\n**Pour 30 vidéos/mois :**\n- Coût workflow : $67\n- Coût influenceurs : $15 000\n- **Économie : $14 933 (99.5%)**\n\n**Temps :**\n- Setup : 1h\n- Par vidéo : 10 min (dont 8 min d'attente génération)\n- 30 vidéos = 5h de travail actif\n\n🔥 **Prêt à créer des talking heads IA ?** Importe le workflow et génère ta première vidéo avatar."
+    }
+  },
+  "workflow_json": {
+    "id": "PpVBvs5fecatpTbx",
+    "meta": {
+      "instanceId": "de822f81f3a2367cef7d9549771a77783236bc9596481be2ae65c05fbcc4b4fd",
+      "templateCredsSetupCompleted": true
+    },
+    "name": "💥 Viral TikTok Video Machine: Auto-Create UGC with VEED Avatars -vide",
+    "tags": [],
+    "nodes": [
+      {
+        "id": "2870c87e-82a6-4a24-a86a-a4c55a9225d9",
+        "name": "Telegram Trigger",
+        "type": "n8n-nodes-base.telegramTrigger",
+        "position": [
+          -2832,
+          -304
+        ],
+        "webhookId": "ccba06ce-2121-43c0-80f0-cd77f60f3130",
+        "parameters": {
+          "updates": [
+            "message"
+          ],
+          "additionalFields": {}
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "lykaJhTNykviJPvo",
+            "name": "Telegram account"
+          }
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "41a44991-a52f-4186-8dec-16f6ccc4faa8",
+        "name": "Workflow Configuration",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          -2560,
+          -304
+        ],
+        "parameters": {
+          "options": {},
+          "assignments": {
+            "assignments": [
+              {
+                "id": "id-1",
+                "name": "elevenLabsApiKey",
+                "type": "string",
+                "value": "YOUR_ELEVENLABS_API_KEY"
+              },
+              {
+                "id": "id-2",
+                "name": "elevenLabsVoiceId",
+                "type": "string",
+                "value": "YOUR_VOICE_ID"
+              },
+              {
+                "id": "id-3",
+                "name": "falApiKey",
+                "type": "string",
+                "value": "YOUR_FAL_API_KEY"
+              },
+              {
+                "id": "id-5",
+                "name": "scriptMaxDuration",
+                "type": "number",
+                "value": 30
+              },
+              {
+                "id": "id-6",
+                "name": "perplexityModel",
+                "type": "string",
+                "value": "sonar"
+              }
+            ]
+          },
+          "includeOtherFields": true
+        },
+        "typeVersion": 3.4
+      },
+      {
+        "id": "985914cd-27e0-4a14-8f51-3da7b4e7a35b",
+        "name": "Extract Photo and Theme",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          -2160,
+          -304
+        ],
+        "parameters": {
+          "options": {},
+          "assignments": {
+            "assignments": [
+              {
+                "id": "id-1",
+                "name": "photoUrl",
+                "type": "string",
+                "value": "={{ $json.message.photo ? $json.message.photo[$json.message.photo.length - 1].file_id : '' }}"
+              },
+              {
+                "id": "id-2",
+                "name": "theme",
+                "type": "string",
+                "value": "={{ $json.message.caption || $json.message.text || 'viral content' }}"
+              }
+            ]
+          },
+          "includeOtherFields": true
+        },
+        "typeVersion": 3.4
+      },
+      {
+        "id": "dd85cdf3-6acc-4758-b9d3-1bab26125361",
+        "name": "Search Trends with Perplexity",
+        "type": "n8n-nodes-base.perplexity",
+        "position": [
+          -2816,
+          128
+        ],
+        "parameters": {
+          "model": "={{ $('Workflow Configuration').first().json.perplexityModel }}",
+          "options": {},
+          "messages": {
+            "message": [
+              {
+                "content": "={{ \n  \"Find the top 3 current viral trends related to: \" + $('Extract Photo and Theme').item.json.message.caption + \n  \". Focus on trending topics, hashtags, and content styles that are performing well on TikTok right now. \" + \n  \"Be specific and actionable. Limit your response strictly to 3 results only — no more.\" \n}}"
+              }
+            ]
+          },
+          "requestOptions": {}
+        },
+        "credentials": {
+          "perplexityApi": {
+            "id": "trkhzC4uBnoafJ4C",
+            "name": "Perplexity account"
+          }
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "610387e3-8f6c-4ceb-b66c-f2311a216259",
+        "name": "Generate Script with GPT-4",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "position": [
+          -2560,
+          128
+        ],
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "gpt-4o-mini"
+          },
+          "options": {},
+          "messages": {
+            "values": [
+              {
+                "content": "=Based on these trends: {{ $json.choices[0].message.content }}\n\nCreate a viral 30-second maximum TikTok script about: {{ $('Extract Photo and Theme').first().json.theme }}\n\nRequirements:\n- Maximum 30 seconds when spoken\n- Hook in first 2 seconds\n- Engaging and conversational\n- Optimized for voice synthesis\n- No special characters or formatting\n- Return ONLY the script text, nothing else"
+              }
+            ]
+          }
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "QmtwfFk8iBkuCXOX",
+            "name": "n8n free OpenAI API credits"
+          }
+        },
+        "typeVersion": 1.8
+      },
+      {
+        "id": "a2b3c398-d8d8-429a-9a74-dfc4234798dc",
+        "name": "ElevenLabs Voice Synthesis",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          -2160,
+          128
+        ],
+        "parameters": {
+          "url": "={{ 'https://api.elevenlabs.io/v1/text-to-speech/' + $('Workflow Configuration').first().json.elevenLabsVoiceId }}",
+          "method": "POST",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file",
+                "outputPropertyName": "audio"
+              }
+            }
+          },
+          "jsonBody": "={{ \n  {\n    \"text\": $json.message.content,\n    \"model_id\": \"eleven_multilingual_v2\",\n    \"voice_settings\": {\n      \"stability\": 0.5,\n      \"similarity_boost\": 0.75\n    }\n  } \n}}",
+          "sendBody": true,
+          "sendHeaders": true,
+          "specifyBody": "json",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "xi-api-key",
+                "value": "={{ $('Workflow Configuration').first().json.elevenLabsApiKey }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Accept",
+                "value": "audio/mpeg"
+              }
+            ]
+          }
+        },
+        "typeVersion": 4.2
+      },
+      {
+        "id": "02e11c5b-d6b9-4c4e-aee5-f68c9fd216d4",
+        "name": "FAL.ai Video Generation",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          -2816,
+          384
+        ],
+        "parameters": {
+          "url": "https://queue.fal.run/veed/fabric-1.0",
+          "method": "POST",
+          "options": {},
+          "jsonBody": "={{ { \"image_url\": $('Build Public Image URL').first().json.data.url.replace(/^http:\\/\\/tmpfiles\\.org\\/(\\d+)\\/(.*)$/i, 'https://tmpfiles.org/dl/$1/$2'), \"audio_url\": $json.data.url.replace(/^http:\\/\\/tmpfiles\\.org\\/(\\d+)\\/(.*)$/i, 'https://tmpfiles.org/dl/$1/$2'), \"resolution\": \"480p\" } }}",
+          "sendBody": true,
+          "sendHeaders": true,
+          "specifyBody": "json",
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ $('Workflow Configuration').first().json.falApiKey }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "typeVersion": 4.2
+      },
+      {
+        "id": "572053f5-c2e2-4454-b2f8-c31bcceb986e",
+        "name": "Generate Caption with GPT-4",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "position": [
+          -2160,
+          384
+        ],
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "gpt-4o-mini"
+          },
+          "options": {},
+          "messages": {
+            "values": [
+              {
+                "content": "=Create an engaging TikTok caption for a video about: {{ $('Extract Photo and Theme').first().json.theme }}\n\nBased on these trends: {{ $('Search Trends with Perplexity').first().json.choices[0].message.content }}\n\nRequirements:\n- Catchy hook in first line\n- Include 5-8 relevant trending hashtags\n- Keep it concise and engaging\n- Optimize for TikTok algorithm\n- Return ONLY the caption text with hashtags, nothing else"
+              }
+            ]
+          }
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "QmtwfFk8iBkuCXOX",
+            "name": "n8n free OpenAI API credits"
+          }
+        },
+        "typeVersion": 1.8
+      },
+      {
+        "id": "929570cc-74b8-4a7d-aaff-3b303dab0348",
+        "name": "Save to Google Sheets",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          -1696,
+          384
+        ],
+        "parameters": {
+          "columns": {
+            "value": {
+              "IDEA": "={{ $('Extract Photo and Theme').first().json.message.caption }}",
+              "CAPTION": "={{ $json.message.content }}",
+              "URL AUDIO": "={{ $('Upload Audio to Public URL').first().json.data.url }}",
+              "URL IMAGE": "={{ $('Build Public Image URL').first().json.data.url }}",
+              "URL VIDEO": "={{ $('Download VEED Video').item.json.video.url }}"
+            },
+            "schema": [
+              {
+                "id": "IDEA",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "IDEA",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "URL IMAGE",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "URL IMAGE",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "URL AUDIO",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "URL AUDIO",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "URL VIDEO",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "URL VIDEO",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "CAPTION",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "CAPTION",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "STATUS",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "STATUS",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              }
+            ],
+            "mappingMode": "defineBelow",
+            "matchingColumns": [
+              "IDEA"
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {},
+          "operation": "append",
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          },
+          "documentId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "YlIXFU6zUDsqwmRG",
+            "name": "Google Sheets account"
+          }
+        },
+        "typeVersion": 4.7
+      },
+      {
+        "id": "c8a19f42-7bc9-4b1b-a5e3-0baea7b9c499",
+        "name": "Setup Guide - Start Here",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -3696,
+          -432
+        ],
+        "parameters": {
+          "color": 4,
+          "width": 400,
+          "height": 1038,
+          "content": "# 🚀 VIRAL TIKTOK CREATOR - SETUP GUIDE\n\n### 🎥 Watch This Tutorial\n\n@[youtube](YykmUeGVb9U)\n\n\nThis workflow transforms a photo + theme into viral TikTok content automatically.\n\n📋 WHAT YOU NEED:\n✓ Telegram Bot Token\n✓ ElevenLabs API Key + Voice ID\n✓ veed.io API Key with FAL.ai \n✓ Blotato API Key\n✓ Google Sheets Document\n✓ OpenAI API Key\n✓ Perplexity API Key\n\n## ⚡ Setup\n1. Import this workflow into your n8n instance.  \n2. Connect your Google Sheets, Gmail, and Google Calendar credentials. Tutorial: [Configure Your Google Sheets, Gmail, Calendar Credentials](https://youtu.be/fDzVmdw7bNU)  \n3. Connect Your Data in Google Sheets. Data must follow this format: [Sample Sheets Data](https://docs.google.com/spreadsheets/d/1G1hS5pEJb4PdPYuChl_ZLNCQNH8CaG6iSa-Ip9W1cTI/edit?usp=sharing/copy)  \n\n---\n## 📬 Need Help or Want to Customize This?\n**Contact me for consulting and support:** [LinkedIn](https://www.linkedin.com/in/dr-firas/) / [YouTube](https://www.youtube.com/@DRFIRASS)  "
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "efd1b243-20b1-4fb0-8bb4-9e4abab3a748",
+        "name": "Step 1 - Telegram Setup",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -3264,
+          -432
+        ],
+        "parameters": {
+          "color": 4,
+          "width": 1836,
+          "height": 524,
+          "content": "# 📱 STEP 1: TELEGRAM BOT SETUP\n\n1. Create a Telegram Bot:\n   • Message @BotFather on Telegram\n   • Send /newbot command\n   • Follow prompts to name your bot\n   • Copy the API token provided\n\n2. Configure Telegram Trigger Node:\n   • Click the \"Telegram Trigger\" node\n   • Add Telegram credentials with your token\n   • Select \"Updates\" to trigger on: Message, Photo\n   • Save the node\n\n3. Test:\n   • Activate the workflow\n   • Send a photo with caption to your bot\n   • Caption = theme (e.g., \"fitness motivation\")\n\n✅ Ready when: Bot responds to messages"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "a36cf612-4574-46ae-93ab-9d716bc47fe6",
+        "name": "Step 2 - API Keys Configuration",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -1520,
+          -432
+        ],
+        "parameters": {
+          "color": 4,
+          "width": 380,
+          "height": 484,
+          "content": "# 🔑 STEP 2: API KEYS CONFIGURATION\n\nConfigure the \"Workflow Configuration\" node with:\n\n1. ElevenLabs (Voice Synthesis):\n   • Sign up at elevenlabs.io\n   • Get API key from profile settings : https://fal.ai/models/fal-ai/elevenlabs/tts/eleven-v3/api\n   • Create/clone a voice, copy Voice ID\n   • Replace: elevenLabsApiKey, elevenLabsVoiceId\n\n2. FAL.ai (Video Generation):\n   • Sign up at fal.ai\n   • Get API key from dashboard : https://fal.ai/models/veed/fabric-1.0/playground\n   • Replace: falApiKey\n\n✅ All keys added to Workflow Configuration node"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "b1b44c15-0110-4455-8564-28072151003a",
+        "name": "Step 3 - AI Processing",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -3264,
+          48
+        ],
+        "parameters": {
+          "color": 5,
+          "width": 1836,
+          "height": 484,
+          "content": "# 🤖 STEP 3: AI PROCESSING SETUP\n\n1. Perplexity API (Trend Research):\n   • Sign up at perplexity.ai\n   • Get API key from settings\n   • Add credentials to \"Search Trends\" node\n   • Model: llama-3.1-sonar-large-128k-online\n\n2. OpenAI API (Script & Caption):\n   • Sign up at platform.openai.com\n   • Create API key\n   • Add credentials to both GPT-4 nodes:\n     - \"Generate Script with GPT-4\"\n     - \"Generate Caption with GPT-4\"\n   • Model: gpt-4o\n\n3. Use VEED : https://fal.ai/models/veed/fabric-1.0/api\n   • Sign up at https://fal.ai/\n   • Create fal API key"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "e4bffba4-af5b-4f5c-a62d-9f3d81e60f9e",
+        "name": "Step 4 - Voice & Video Generation",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -1520,
+          48
+        ],
+        "parameters": {
+          "color": 5,
+          "width": 380,
+          "height": 1136,
+          "content": "# 🎬 STEP 4: VOICE & VIDEO GENERATION\n\nThese nodes are pre-configured and work automatically:\n\n1. ElevenLabs Voice Synthesis: https://fal.ai/models/fal-ai/elevenlabs/tts/eleven-v3/api\n   • Converts script to natural speech\n   • Uses your cloned voice\n   • Outputs MP3 audio file\n\n2. FAL.ai Video Generation:\n   • Takes your photo + audio\n   • Creates talking video (lip-sync)\n   • Uses VEED Fabric 1.0 model\n   • Syncs mouth movements to audio\n\n3. Download Generated Video:\n   • Retrieves final video file\n   • Prepares for publishing\n\n💡 NO CONFIGURATION NEEDED\n   Just ensure API keys are set in Step 2\n\n✅ Automatic processing - no action required"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "13bcba21-2e94-4d66-9ebe-68f616c483f7",
+        "name": "Step 5 - Publishing",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -3264,
+          528
+        ],
+        "parameters": {
+          "color": 5,
+          "width": 2124,
+          "height": 660,
+          "content": "\n\n\n\n\n# 📤 STEP 5: PUBLISHING & TRACKING\n\n### Install the Blotato [Blotato](https://blotato.com/?ref=firas) Node in n8n (Community Nodes)\n1. In n8n, open **Settings → Community Nodes**.  \n2. Click **Install**, then add: `@blotato/n8n-nodes-blotato`.  \n3. Log in to **Blotato**.  \n4. Go to **Settings → API Keys**.  \n5. In n8n → **Credentials → New**.  \n6. Choose **Blotato API** \n(provided by the community node you installed).  \n\n2. TikTok Publishing (Blotato):\n   • Pre-configured to auto-publish\n   • Uses caption from GPT-4\n   • Privacy: Public\n   • Requires Blotato API key from Step 2"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "81b09147-e1dc-48dc-a8a1-f66e4babd1dd",
+        "name": "How It Works",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -3696,
+          640
+        ],
+        "parameters": {
+          "color": 4,
+          "width": 396,
+          "height": 546,
+          "content": "# ⚡ HOW IT WORKS - WORKFLOW FLOW\n\n1️⃣ You send: Photo + Theme via Telegram\n   ↓\n2️⃣ Perplexity finds: Current viral trends\n   ↓\n3️⃣ GPT-4 creates: 10-second viral script\n   ↓\n4️⃣ ElevenLabs generates: Voice audio (MP3)\n   ↓\n5️⃣ FAL.ai creates: Talking video from photo\n   ↓\n6️⃣ GPT-4 writes: Optimized caption + hashtags\n   ↓\n7️⃣ Saves to: Google Sheets (tracking)\n   ↓\n8️⃣ Publishes to: TikTok automatically\n\n⏱️ TOTAL TIME: ~2-3 minutes\n🎯 RESULT: Viral TikTok video published!\n\n💡 USAGE:\n   Send photo with caption \"fitness tips\"\n   → Get viral fitness video on TikTok"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "5ecbd4f1-d8b5-44a7-b671-7ef29b612955",
+        "name": "Get Photo File from Telegram",
+        "type": "n8n-nodes-base.telegram",
+        "position": [
+          -1920,
+          -304
+        ],
+        "webhookId": "466a3150-51b2-422e-841b-79f03d9a7317",
+        "parameters": {
+          "fileId": "={{ $json.photoUrl }}",
+          "resource": "file",
+          "additionalFields": {}
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "lykaJhTNykviJPvo",
+            "name": "Telegram account"
+          }
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "0d06342a-4973-4096-acd4-f8deaa4d3360",
+        "name": "Upload Audio to Public URL",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          -1696,
+          128
+        ],
+        "parameters": {
+          "url": "https://tmpfiles.org/api/v1/upload",
+          "method": "POST",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            }
+          },
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "file",
+                "parameterType": "formBinaryData",
+                "inputDataFieldName": "audio_mp3"
+              }
+            ]
+          }
+        },
+        "typeVersion": 4.2
+      },
+      {
+        "id": "8babaa0f-2c5e-40bb-804d-508138bff8a4",
+        "name": "Convert .mpga to .mp3",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          -1920,
+          128
+        ],
+        "parameters": {
+          "jsCode": "return items.map(item => {\n  const b = item.binary?.audio;            // <-- ta propriété binaire actuelle\n  if (!b) return item;\n\n  // clone sous un nouveau nom de propriété\n  item.binary.audio_mp3 = {\n    ...b,\n    fileName: (b.fileName || 'audio.mp3').replace(/\\.mpga$/i, '.mp3'),\n    mimeType: 'audio/mpeg'\n  };\n\n  // (optionnel) garder l’original:\n  // delete item.binary.audio;\n\n  return item;\n});\n"
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "8bd012a0-1e03-4d69-bca4-350c0065bca2",
+        "name": "Build Public Image URL",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          -1696,
+          -304
+        ],
+        "parameters": {
+          "url": "https://tmpfiles.org/api/v1/upload",
+          "method": "POST",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            }
+          },
+          "sendBody": true,
+          "contentType": "multipart-form-data",
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "file",
+                "parameterType": "formBinaryData",
+                "inputDataFieldName": "data"
+              }
+            ]
+          }
+        },
+        "typeVersion": 4.2
+      },
+      {
+        "id": "11873626-3cbc-441f-bc72-d5e1fa2f65a7",
+        "name": "Wait for VEED",
+        "type": "n8n-nodes-base.wait",
+        "position": [
+          -2576,
+          384
+        ],
+        "webhookId": "55faa42e-6509-40b5-a589-48c1db44727f",
+        "parameters": {
+          "unit": "minutes",
+          "amount": 10
+        },
+        "typeVersion": 1.1
+      },
+      {
+        "id": "73fc87ac-459c-4d7f-8874-bbad44c8c1e8",
+        "name": "Download VEED Video",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          -2352,
+          384
+        ],
+        "parameters": {
+          "url": "=https://queue.fal.run/veed/fabric-1.0/requests/{{ $json.request_id }}",
+          "options": {},
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ $('Workflow Configuration').first().json.falApiKey }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        },
+        "typeVersion": 4.2
+      },
+      {
+        "id": "035b243a-cc2d-4194-b3f2-e45822ecbf8a",
+        "name": "Send a video",
+        "type": "n8n-nodes-base.telegram",
+        "position": [
+          -2816,
+          784
+        ],
+        "webhookId": "99e9dbe1-08a3-4d7e-8986-f40bb00cc897",
+        "parameters": {
+          "file": "={{ $json['URL VIDEO'] }}",
+          "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+          "operation": "sendVideo",
+          "additionalFields": {}
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "lykaJhTNykviJPvo",
+            "name": "Telegram account"
+          }
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "44cfbfd3-9a62-406e-bdc4-a88ab4ef082c",
+        "name": "Upload Video to BLOTATO",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2624,
+          784
+        ],
+        "parameters": {
+          "mediaUrl": "={{ $('Save to Google Sheets').item.json['URL VIDEO'] }}",
+          "resource": "media"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "63e349be-9306-4295-b522-66fa70219197",
+        "name": "Youtube",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2048,
+          784
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "youtube",
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "8047",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/8047",
+            "cachedResultName": "DR FIRASS (Dr. Firas)"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "postContentMediaUrls": "={{ $json.url }}",
+          "postCreateYoutubeOptionTitle": "={{ $('Save to Google Sheets').item.json.IDEA }}",
+          "postCreateYoutubeOptionPrivacyStatus": "private",
+          "postCreateYoutubeOptionShouldNotifySubscribers": false
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "44cc333c-b20b-43ea-81ac-c324117d6737",
+        "name": "Tiktok",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2416,
+          608
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "tiktok",
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "2079",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/2079",
+            "cachedResultName": "elitecybzcs"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "postContentMediaUrls": "={{ $json.url }}"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "b2cb12fb-ae11-4d82-9d0f-7afbb6b66ed9",
+        "name": "Update Status to \"DONE\"",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          -1680,
+          784
+        ],
+        "parameters": {
+          "columns": {
+            "value": {
+              "STATUS": "DONE",
+              "URL VIDEO": "={{ $('Save to Google Sheets').item.json['URL VIDEO'] }}"
+            },
+            "schema": [
+              {
+                "id": "IDEA",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "IDEA",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "URL IMAGE",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "URL IMAGE",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "URL AUDIO",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "URL AUDIO",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "URL VIDEO",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "URL VIDEO",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "CAPTION",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "CAPTION",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "STATUS",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "STATUS",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              }
+            ],
+            "mappingMode": "defineBelow",
+            "matchingColumns": [
+              "URL VIDEO"
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {},
+          "operation": "appendOrUpdate",
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          },
+          "documentId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "YlIXFU6zUDsqwmRG",
+            "name": "Google Sheets account"
+          }
+        },
+        "typeVersion": 4.5
+      },
+      {
+        "id": "15a31ec9-915f-40f9-bd2c-66eee50074a8",
+        "name": "Linkedin",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2224,
+          608
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "linkedin",
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "1446",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/1446",
+            "cachedResultName": "Samuel Amalric"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "postContentMediaUrls": "={{ $json.url }}"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "4bcf429e-fe53-41bd-be77-3f4d212b6270",
+        "name": "Facebook",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2048,
+          608
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "facebook",
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "1759",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/1759",
+            "cachedResultName": "Firass Ben"
+          },
+          "facebookPageId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "101603614680195",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/1759/subaccounts/101603614680195",
+            "cachedResultName": "Dr. Firas"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "postContentMediaUrls": "={{ $json.url }}"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "cf2ccc40-f8c0-4d44-8797-4b63594e95e7",
+        "name": "Instagram",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2416,
+          784
+        ],
+        "parameters": {
+          "options": {},
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "1687",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/1687",
+            "cachedResultName": "acces.a.vie"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "postContentMediaUrls": "={{ $json.url }}"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "727e0958-20b4-40a5-82ce-b7a88b04fb0a",
+        "name": "Threads",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2416,
+          992
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "threads",
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "2280",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/2280",
+            "cachedResultName": "doc.firass"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "postContentMediaUrls": "={{ $json.url }}"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "6ce39e15-6c7b-4068-9f4f-3609d8ca5048",
+        "name": "Bluesky",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2224,
+          992
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "bluesky",
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "6012",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/6012",
+            "cachedResultName": "formationinternet.bsky.social"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "postContentMediaUrls": "={{ $json.url }}"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "3a9f4622-1dbd-49c2-8b3b-7c079f67f7ea",
+        "name": "Pinterest",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2048,
+          992
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "pinterest",
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "363",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/363",
+            "cachedResultName": "formationinternet2022"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "pinterestBoardId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "1146658823815436667"
+          },
+          "postContentMediaUrls": "={{ $json.url }}"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "5d871caf-8d9e-48c8-8dcf-e4cced811ec4",
+        "name": "Twitter (X)",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          -2224,
+          784
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "twitter",
+          "accountId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "1289",
+            "cachedResultUrl": "https://backend.blotato.com/v2/accounts/1289",
+            "cachedResultName": "Docteur_Firas"
+          },
+          "postContentText": "={{ $('Save to Google Sheets').item.json.CAPTION }}",
+          "postContentMediaUrls": "={{ $json.url }}"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "wozsYJYLfCZO37j8",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "a9d80b89-54af-4006-b137-f1353d8dfb56",
+        "name": "Merge1",
+        "type": "n8n-nodes-base.merge",
+        "position": [
+          -1840,
+          672
+        ],
+        "parameters": {
+          "mode": "chooseBranch",
+          "numberInputs": 9
+        },
+        "typeVersion": 3.2
+      }
+    ],
+    "active": false,
+    "pinData": {},
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "versionId": "fe4ea433-4bce-4955-ba43-d5a74ef835a9",
+    "connections": {
+      "Merge1": {
+        "main": [
+          [
+            {
+              "node": "Update Status to \"DONE\"",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tiktok": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Bluesky": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 7
+            }
+          ]
+        ]
+      },
+      "Threads": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 6
+            }
+          ]
+        ]
+      },
+      "Youtube": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 5
+            }
+          ]
+        ]
+      },
+      "Facebook": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 2
+            }
+          ]
+        ]
+      },
+      "Linkedin": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Instagram": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 3
+            }
+          ]
+        ]
+      },
+      "Pinterest": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 8
+            }
+          ]
+        ]
+      },
+      "Twitter (X)": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 4
+            }
+          ]
+        ]
+      },
+      "Send a video": {
+        "main": [
+          [
+            {
+              "node": "Upload Video to BLOTATO",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for VEED": {
+        "main": [
+          [
+            {
+              "node": "Download VEED Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Telegram Trigger": {
+        "main": [
+          [
+            {
+              "node": "Workflow Configuration",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download VEED Video": {
+        "main": [
+          [
+            {
+              "node": "Generate Caption with GPT-4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert .mpga to .mp3": {
+        "main": [
+          [
+            {
+              "node": "Upload Audio to Public URL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save to Google Sheets": {
+        "main": [
+          [
+            {
+              "node": "Send a video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Public Image URL": {
+        "main": [
+          [
+            {
+              "node": "Search Trends with Perplexity",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Workflow Configuration": {
+        "main": [
+          [
+            {
+              "node": "Extract Photo and Theme",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Photo and Theme": {
+        "main": [
+          [
+            {
+              "node": "Get Photo File from Telegram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "FAL.ai Video Generation": {
+        "main": [
+          [
+            {
+              "node": "Wait for VEED",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload Video to BLOTATO": {
+        "main": [
+          [
+            {
+              "node": "Tiktok",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Linkedin",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Facebook",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Instagram",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Twitter (X)",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Youtube",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Threads",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Bluesky",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Pinterest",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ElevenLabs Voice Synthesis": {
+        "main": [
+          [
+            {
+              "node": "Convert .mpga to .mp3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Script with GPT-4": {
+        "main": [
+          [
+            {
+              "node": "ElevenLabs Voice Synthesis",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload Audio to Public URL": {
+        "main": [
+          [
+            {
+              "node": "FAL.ai Video Generation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Caption with GPT-4": {
+        "main": [
+          [
+            {
+              "node": "Save to Google Sheets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Photo File from Telegram": {
+        "main": [
+          [
+            {
+              "node": "Build Public Image URL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Search Trends with Perplexity": {
+        "main": [
+          [
+            {
+              "node": "Generate Script with GPT-4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+}

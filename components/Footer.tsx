@@ -26,15 +26,15 @@ export default function Footer() {
           </div>
 
           {/* Templates */}
-          <div>
-            <div className="font-semibold text-white mb-3">Templates</div>
+          <nav aria-label="Navigation des templates">
+            <h4 className="font-semibold text-white mb-3">Templates</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/templates?category=ecommerce" className="text-gray-400 hover:text-factory-orange transition-colors">E-commerce</Link></li>
               <li><Link href="/templates?category=services" className="text-gray-400 hover:text-factory-orange transition-colors">Services</Link></li>
               <li><Link href="/templates?category=b2b" className="text-gray-400 hover:text-factory-orange transition-colors">B2B / SaaS</Link></li>
               <li><Link href="/templates" className="text-gray-400 hover:text-factory-orange transition-colors">Tous les Templates</Link></li>
             </ul>
-          </div>
+          </nav>
 
           {/* Company */}
           <div>
@@ -45,7 +45,7 @@ export default function Footer() {
               <li><a href="mailto:digitalaine@gmail.com" className="text-gray-400 hover:text-factory-orange transition-colors">Contact</a></li>
               <li><a href="#" className="text-gray-400 hover:text-factory-orange transition-colors">Affiliates</a></li>
             </ul>
-          </div>
+          </nav>
         </div>
 
         {/* Bottom bar */}
