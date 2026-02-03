@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import fs from 'fs'
+import path from 'path'
 
 // Category-based image mapping (Unsplash)
 const categoryImages: Record<string, string> = {
@@ -29,11 +31,9 @@ interface WorkflowData {
 
 async function getWorkflow(slug: string): Promise<WorkflowData | null> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/templates/${slug}.json`, {
-      cache: 'no-store'
-    })
-    if (!res.ok) return null
-    return res.json()
+    const filePath = path.join(process.cwd(), 'public', 'templates', `${slug}.json`)
+    const fileContents = fs.readFileSync(filePath, 'utf8')
+    return JSON.parse(fileContents)
   } catch {
     return null
   }
@@ -41,8 +41,9 @@ async function getWorkflow(slug: string): Promise<WorkflowData | null> {
 
 export async function generateStaticParams() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/templates/index.json`)
-    const data = await res.json()
+    const filePath = path.join(process.cwd(), 'public', 'templates', 'index.json')
+    const fileContents = fs.readFileSync(filePath, 'utf8')
+    const data = JSON.parse(fileContents)
     return data.workflows.map((w: any) => ({ slug: w.slug }))
   } catch {
     return []
