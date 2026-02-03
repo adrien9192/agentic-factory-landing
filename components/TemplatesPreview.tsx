@@ -1,51 +1,104 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 
-const templates = [
+interface WorkflowMetadata {
+  id: string
+  slug: string
+  title_fr: string
+  description_short_fr: string
+  category: string
+  complexity: string
+}
+
+interface WorkflowsIndex {
+  total: number
+  workflows: WorkflowMetadata[]
+}
+
+// Legacy templates (keeping for fallback)
+const legacyTemplates = [
   {
     id: '001',
-    name: 'Abandoned Cart Recovery',
-    title: 'Recover 12% of Lost Sales',
-    description: 'Every abandoned cart gets a perfectly-timed email sequence that brings buyers back — automatically.',
+    title: 'Récupération Panier Abandonné',
+    description: 'Chaque panier abandonné reçoit une séquence d\'emails parfaitement minutée qui ramène les acheteurs — automatiquement.',
     price: '€49',
     platforms: ['n8n', 'Make.com'],
+    slug: 'abandoned-cart-recovery',
   },
   {
     id: '002',
-    name: 'SMS Appointment Reminder',
-    title: 'Kill No-Shows Forever',
-    description: 'One missed appointment costs you €50+. This template sends reminders that cut no-shows by 80%.',
+    title: 'Rappel RDV par SMS',
+    description: 'Un rendez-vous manqué coûte €50+. Ce template envoie des rappels qui réduisent les absences de 80%.',
     price: '€39',
     platforms: ['n8n', 'Make.com'],
+    slug: 'sms-appointment-reminder',
   },
   {
     id: '003',
-    name: 'Lead Capture → Email Nurture',
-    title: 'Turn Cold Leads Into Customers',
-    description: 'New lead comes in, personalized email sequence goes out — while you sleep.',
+    title: 'Capture Leads → Nurture Email',
+    description: 'Nouveau lead arrive, séquence d\'emails personnalisée part — pendant que vous dormez.',
     price: '€59',
     platforms: ['n8n', 'Make.com'],
+    slug: 'lead-capture-nurture',
   },
 ]
 
 export default function TemplatesPreview() {
+  const [workflows, setWorkflows] = useState<WorkflowMetadata[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Fetch workflows from JSON
+    fetch('/templates/index.json')
+      .then((res) => res.json())
+      .then((data: WorkflowsIndex) => {
+        setWorkflows(data.workflows)
+        setLoading(false)
+      })
+      .catch((error) => {
+        console.error('Failed to load workflows:', error)
+        setLoading(false)
+      })
+  }, [])
+
+  // Transform workflows to template format
+  const allTemplates = [
+    ...legacyTemplates,
+    ...workflows.map((w) => ({
+      id: w.id,
+      title: w.title_fr,
+      description: w.description_short_fr,
+      price: w.complexity === 'Advanced' ? '€50' : '€30',
+      platforms: ['n8n'],
+      slug: w.slug,
+      category: w.category,
+    })),
+  ]
+
   return (
     <section id="templates" className="py-24 bg-factory-surface">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Choose Your Template
+            Choisissez Votre Template
           </h2>
           <p className="text-lg text-factory-text-secondary max-w-3xl mx-auto">
-            Proven workflows that pay for themselves in days, not months.
+            {allTemplates.length} workflows éprouvés qui se rentabilisent en quelques jours.
           </p>
         </div>
 
-        {/* Templates grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {templates.map((template, index) => (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-factory-text-secondary">Chargement des templates...</div>
+          </div>
+        ) : (
+          <>
+            {/* Templates grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              {allTemplates.map((template, index) => (
             <motion.div
               key={template.id}
               initial={{ opacity: 0, y: 20 }}
@@ -91,26 +144,38 @@ export default function TemplatesPreview() {
                 </div>
 
                 {/* CTA */}
-                <button
-                  disabled
-                  className="w-full py-3 text-center font-semibold text-white bg-gray-400 rounded-lg cursor-not-allowed"
-                >
-                  Coming Soon
-                </button>
+                {template.slug && workflows.find(w => w.slug === template.slug) ? (
+                  <a
+                    href={`/templates/${template.slug}.json`}
+                    download
+                    className="block w-full py-3 text-center font-semibold text-white bg-factory-orange rounded-lg hover:bg-[#E55A2B] transition-colors"
+                  >
+                    Télécharger (JSON)
+                  </a>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full py-3 text-center font-semibold text-white bg-gray-400 rounded-lg cursor-not-allowed"
+                  >
+                    Bientôt disponible
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}
         </div>
 
         {/* View all CTA */}
-        <div className="text-center">
+        <div className="text-center mt-8">
           <a
             href="#email-signup"
             className="inline-flex items-center px-6 py-3 text-lg font-semibold border-2 border-factory-dark text-factory-dark rounded-lg hover:bg-factory-dark hover:text-white transition-all duration-150"
           >
-            Get Early Access →
+            Accès anticipé →
           </a>
         </div>
+        </>
+        )}
       </div>
     </section>
   )
