@@ -1,0 +1,984 @@
+{
+  "metadata": {
+    "id": "001",
+    "slug": "gnrez-des-vidos-virales-ia-avec-veo-3-et-tlchargez-les-sur-tiktok",
+    "title_en": "Generate AI Viral Videos with VEO 3 and Upload to TikTok",
+    "title_fr": "Générez des vidéos virales IA avec VEO 3 et téléchargez-les sur TikTok",
+    "description_short_en": "Automate viral video creation with AI—generate, edit, and auto-upload stunning TikTok videos daily. Ideal for creators and marketers. Discover more!",
+    "description_short_fr": "Automatisez la création de vidéos virales avec l'IA : générez, modifiez et téléchargez automatiquement de superbes vidéos TikTok quotidiennement. Idéal pour les créateurs et les marketeurs. Découvrez-en davantage !",
+    "description_full_en": "Generate AI Viral Videos with VEO 3 and Upload to TikTok\n1. Workflow Overview\nThis workflow automates the creation of viral short-form videos optimized for TikTok using AI-generated concepts and the VEO 3 video generation API. It streamlines the entire content creation pipeline from ideation through video production to publishing on TikTok, enabling users to scale their content output with minimal manual intervention.\nThe workflow is logically divided into three main blocks:\n1.1 Daily Trigger & Idea Generation:\nAutomatically triggers daily to generate a creative video idea using OpenAI GPT-5 and LangChain AI tools, parses structured AI output, and saves metadata to Google Sheets.\n1.2 Video Script Generation & VEO 3 Video Creation:\nBased on the saved idea, an AI agent crafts a detailed video prompt. The prompt is formatted and sent to the VEO 3 API to generate a cinematic vertical video. It includes a wait period to allow rendering, then downloads the finished video.\n1.3 Video Upload & Status Update:\nThe downloaded video URL is stored in Google Sheets, uploaded to Blotato (a TikTok integration node), then posted to TikTok. The production status is updated to reflect completion.\nSupporting nodes include sticky notes with detailed instructions and documentation links.\n2. Block-by-Block Analysis\n2.1 Daily Trigger & Idea Generation\nOverview:\nThis block initiates the workflow on a daily schedule. It generates a creative \"before/after transformation\" video idea using AI, parses the structured output, and records the idea and metadata to a Google Sheet.\nNodes Involved:\nTrigger: Start Daily Content Generation\nTool: Inject Creative Perspective (Idea)\nLLM: Generate Raw Idea (GPT-5)\nGenerate Creative Video Idea (LangChain agent)\nParse AI Output (Idea, Environment, Sound)\nSave Idea & Metadata to Google Sheets\nNode Details:\nTrigger: Start Daily Content Generation\nType: Schedule Trigger\nRole: Automatically triggers the workflow daily (interval set to 1 day)\nInputs: None\nOutputs: Triggers \"Generate Creative Video Idea\" node\nEdge cases: Misconfigured scheduling or disabled workflow can prevent triggering\nTool: Inject Creative Perspective (Idea)\nType: LangChain Tool Node (Think Tool)\nRole: Provides AI with creative perspective to improve idea generation\nInputs: Trigger output\nOutputs: Connected to \"Generate Creative Video Idea\" for enhanced ideation\nEdge cases: AI tool failures or timeouts\nLLM: Generate Raw Idea (GPT-5)\nType: LangChain Chat OpenAI (GPT-5 mini)\nRole: Generates an initial raw before/after transformation idea using GPT-5\nConfiguration: Uses OpenAI API with GPT-5 mini model\nInputs: Invoked by \"Generate Creative Video Idea\"\nOutputs: Raw AI text passed forward\nEdge cases: API quota exceeded, auth errors, model response delays\nGenerate Creative Video Idea\nType: LangChain Agent Node\nRole: Processes raw idea, enriches it with structured rules and formatting for TikTok content\nConfiguration: Complex system message enforcing strict formatting and content rules (e.g., 12 hashtags, emoji, environment, sound prompt)\nInputs: Output from LLM and Think tool nodes\nOutputs: Structured JSON array with keys: Caption, Idea, Environment, Sound, Status\nEdge cases: Parsing errors if AI output does not conform to expected schema\nParse AI Output (Idea, Environment, Sound)\nType: LangChain Structured Output Parser\nRole: Parses the AI-generated JSON array into structured data for further processing\nInputs: AI output string from \"Generate Creative Video Idea\"\nOutputs: Parsed structured JSON with fields usable by downstream nodes\nEdge cases: JSON schema mismatch or malformed AI output\nSave Idea & Metadata to Google Sheets\nType: Google Sheets Node\nRole: Appends the generated idea and metadata (caption, status, prompts) to a Google Sheet for tracking\nConfiguration: Defined column mapping for idea, caption, production status, environment, sound\nInputs: Parsed AI output JSON\nOutputs: Triggers next block (\"Set Master Prompt\")\nEdge cases: Google Sheets API quota, auth expiration, network issues\n2.2 Video Script Generation & VEO 3 Video Creation\nOverview:\nGenerates a detailed video script prompt based on the saved idea metadata, formats it for VEO 3 API consumption, triggers video generation, waits for rendering, and downloads the final video.\nNodes Involved:\nSet Master Prompt\nAI Agent: Generate Video Script\nFormat Prompt\nGenerate Video with VEO3 (HTTP Request)\nWait for VEO3 Rendering\nDownload Video from VEO3\nNode Details:\nSet Master Prompt\nType: Set Node\nRole: Defines a comprehensive JSON master prompt schema describing cinematic video generation parameters such as description, style, camera, lighting, environment, motion, VFX, audio, ending, and format (aspect ratio 9:16)\nConfiguration: Static JSON string assigned to variable\njson_master\nplus model and aspect ratio keys\nInputs: Triggered after saving idea metadata\nOutputs: Passes master prompt to AI Agent node\nEdge cases: Syntax errors in JSON, missing fields affecting downstream processing\nAI Agent: Generate Video Script\nType: LangChain Agent Node\nRole: Uses the previously saved idea, environment, and sound prompts to generate a detailed VEO 3-compatible video prompt JSON with fields such as BEFORE scene, AFTER scene, TRANSITION, CAMERA, LIGHTING, PALETTE, STYLE, and SOUND\nConfiguration: System prompt enforcing strict JSON output with only two top-level keys:\ntitle\nand\nfinal_prompt\n(stringified JSON)\nInputs: Idea metadata + master prompt\nOutputs: Structured AI JSON object parsed by next node\nEdge cases: AI output formatting errors, token limit issues, API failures\nFormat Prompt\nType: Code Node (JavaScript)\nRole: Converts the AI agent’s JSON output into a single JSON string escaped properly to be used as the\nprompt\nparameter for VEO 3 API\nInputs: AI Agent output\nOutputs: Prepared HTTP request body fields (prompt, model, aspectRatio)\nEdge cases: JSON stringify errors, null inputs\nGenerate Video with VEO3\nType: HTTP Request Node\nRole: Sends POST request to VEO 3 API\nhttps://api.kie.ai/api/v1/veo/generate\nto start video generation with the crafted prompt\nConfiguration: Uses HTTP Header Authentication with Kie AI credentials\nInputs: Formatted prompt and model/aspect ratio settings\nOutputs: Returns a\ntaskId\nfor video rendering tracking\nEdge cases: API rate limits, auth token expiration, request timeouts\nWait for VEO3 Rendering\nType: Wait Node\nRole: Pauses workflow execution for 3 minutes to allow VEO 3 to process and render the video\nInputs: Triggered after video generation request\nOutputs: After wait, triggers download node\nEdge cases: Fixed wait time may be insufficient for longer renders\nDownload Video from VEO3\nType: HTTP Request Node\nRole: Queries\nhttps://api.kie.ai/api/v1/veo/record-info\nwith\ntaskId\nto retrieve rendering status and download URL of the generated video\nConfiguration: HTTP Header Authentication with Kie AI credentials\nInputs: taskId from generation response\nOutputs: Returns JSON containing final video URLs\nEdge cases: Video not ready yet, API errors, malformed responses\n2.3 Video Upload & Status Update\nOverview:\nStores the final video URL in Google Sheets, uploads the video to Blotato for TikTok, posts the video to TikTok, and updates the production status in Google Sheets to “DONE”.\nNodes Involved:\nURL Final Video (Google Sheets)\nUpload Video to BLOTATO\nTikTok (Blotato node)\nUpdate Status to \"DONE\" (Google Sheets)\nNode Details:\nURL Final Video\nType: Google Sheets Node\nRole: Updates the same row in Google Sheets with the final video URL and marks production as complete (“done”)\nInputs: Video download response JSON\nOutputs: Triggers video upload node\nEdge cases: Sheet update conflicts, API limits\nUpload Video to BLOTATO\nType: Blotato Node (Community node)\nRole: Uploads the video media URL to Blotato platform, preparing it for TikTok posting\nConfiguration: Uses Blotato API credentials, resource set to \"media\"\nInputs: Final video URL\nOutputs: Provides media URL required by TikTok posting node\nEdge cases: Upload failures, network issues, incorrect credentials\nTikTok\nType: Blotato Node (TikTok integration)\nRole: Creates a TikTok post with the uploaded video and caption from Google Sheets, marking the post as AI-generated\nConfiguration: TikTok platform, account ID parameter, caption text pulled from saved idea metadata, media URL from previous node\nInputs: Uploaded media URL and caption\nOutputs: Triggers status update node\nEdge cases: TikTok API limits, authentication errors, content policy rejections\nUpdate Status to \"DONE\"\nType: Google Sheets Node\nRole: Updates the production status column in Google Sheets to “Publish” indicating completion of the entire workflow cycle\nInputs: Confirmation from TikTok post node\nOutputs: Workflow ends here for this iteration\nEdge cases: Sheet locking, API errors\n3. Summary Table\nNode Name\nNode Type\nFunctional Role\nInput Node(s)\nOutput Node(s)\nSticky Note\nTrigger: Start Daily Content Generation\nSchedule Trigger\nInitiates daily workflow trigger\nNone\nGenerate Creative Video Idea\nTool: Inject Creative Perspective (Idea)\nLangChain Tool (Think)\nAdds creative perspective to AI idea\nTrigger: Start Daily Content Generation\nGenerate Creative Video Idea\nLLM: Generate Raw Idea (GPT-5)\nLangChain LLM Chat OpenAI\nGenerates raw AI idea using GPT-5\nGenerate Creative Video Idea\nGenerate Creative Video Idea\nGenerate Creative Video Idea\nLangChain Agent\nProduces structured video idea JSON\nTool: Inject Creative Perspective, LLM: Generate Raw Idea\nParse AI Output (Idea, Environment, Sound)\nParse AI Output (Idea, Environment, Sound)\nLangChain Output Parser Structured\nParses AI JSON output into structured data\nGenerate Creative Video Idea\nSave Idea & Metadata to Google Sheets\nSave Idea & Metadata to Google Sheets\nGoogle Sheets\nSaves generated idea and metadata\nParse AI Output\nSet Master Prompt\nSet Master Prompt\nSet Node\nDefines master prompt JSON schema\nSave Idea & Metadata to Google Sheets\nAI Agent: Generate Video Script\nAI Agent: Generate Video Script\nLangChain Agent\nGenerates detailed video script prompt\nSet Master Prompt, OpenAI Chat Model, Think, Structured Output Parser\nFormat Prompt\nFormat Prompt\nCode\nFormats prompt JSON string for API\nAI Agent: Generate Video Script\nGenerate Video with VEO3\nGenerate Video with VEO3\nHTTP Request\nCalls VEO 3 API to generate video\nFormat Prompt\nWait for VEO3 Rendering\nWait for VEO3 Rendering\nWait\nWaits fixed time for video rendering\nGenerate Video with VEO3\nDownload Video from VEO3\nDownload Video from VEO3\nHTTP Request\nRetrieves video URL after rendering\nWait for VEO3 Rendering\nURL Final Video\nURL Final Video\nGoogle Sheets\nUpdates Google Sheet with final video URL\nDownload Video from VEO3\nUpload Video to BLOTATO\nUpload Video to BLOTATO\nBlotato Node\nUploads video to Blotato for TikTok\nURL Final Video\nTikTok\nTikTok\nBlotato Node\nPosts video to TikTok with caption\nUpload Video to BLOTATO\nUpdate Status to \"DONE\"\nUpdate Status to \"DONE\"\nGoogle Sheets\nMarks production status as complete\nTikTok\nNone\nSticky Note8\nSticky Note\nContains tutorial video, documentation link, and detailed setup instructions\nNone\nNone\nSee links for tutorial and setup:\nhttps://automatisation.notion.site/Generate-AI-Viral-Videos-with-VEO-3-and-Upload-to-TikTok-2703d6550fd980aa9ea1dd7867c1cccf?source=copy_link\nSticky Note\nSticky Note\nExplains workflow purpose and use case\nNone\nNone\nExplains entire workflow’s problem solving scope\nSticky Note7\nSticky Note\nMarks input idea section\nNone\nNone\nSticky Note9\nSticky Note\nMarks TikTok publish step\nNone\nNone\nSticky Note1\nSticky Note\nMarks VEO3 video generation step\nNone\nNone\n4. Reproducing the Workflow from Scratch\nCreate a Schedule Trigger node\nType: Schedule Trigger\nConfigure to trigger daily (interval: 1 day)\nName: \"Trigger: Start Daily Content Generation\"\nAdd LangChain Think Tool node\nType: LangChain Tool Think\nName: \"Tool: Inject Creative Perspective (Idea)\"\nConnect from Schedule Trigger node\nAdd LangChain Chat OpenAI node\nType: LangChain LLM Chat OpenAI\nModel: GPT-5 mini\nName: \"LLM: Generate Raw Idea (GPT-5)\"\nConnect from Think Tool node\nSet OpenAI credentials with valid API key\nAdd LangChain Agent node for idea generation\nName: \"Generate Creative Video Idea\"\nSet system message with detailed prompt enforcing strict output format (see Block 2.1)\nConnect inputs from LLM: Generate Raw Idea and Think Tool nodes\nAdd LangChain Output Parser Structured node\nName: \"Parse AI Output (Idea, Environment, Sound)\"\nConfigure JSON schema example matching expected AI output structure\nConnect from \"Generate Creative Video Idea\"\nAdd Google Sheets node (append)\nName: \"Save Idea & Metadata to Google Sheets\"\nConfigure document ID and sheet name\nMap columns: id (ROW()-1), idea, caption, production status, environment_prompt, sound_prompt\nConnect from \"Parse AI Output\"\nAdd Set node\nName: \"Set Master Prompt\"\nCreate JSON master prompt variable with detailed cinematic video schema (see Block 2.2)\nSet model to \"veo3_fast\" and aspectRatio to \"9:16\"\nConnect from \"Save Idea & Metadata to Google Sheets\"\nAdd LangChain Agent node for video script generation\nName: \"AI Agent: Generate Video Script\"\nUse system message enforcing output of JSON object with\ntitle\nand\nfinal_prompt\nkeys\nInputs: idea, environment_prompt, sound_prompt from Google Sheets; master prompt from Set node\nConnect from \"Set Master Prompt\" node\nProvide OpenAI GPT-4.1-mini credentials\nAdd Code node\nName: \"Format Prompt\"\nJavaScript code: stringify and escape the\nfinal_prompt\nfor API request (see Block 2.2)\nConnect from \"AI Agent: Generate Video Script\"\nAdd HTTP Request node\nName: \"Generate Video with VEO3\"\nMethod: POST\nURL:\nhttps://api.kie.ai/api/v1/veo/generate\nBody: JSON with keys\nprompt\n,\nmodel\n,\naspectRatio\nusing expressions from \"Format Prompt\"\nAuthentication: HTTP Header Auth with Kie AI API key\nConnect from \"Format Prompt\"\nAdd Wait node\nName: \"Wait for VEO3 Rendering\"\nDuration: 3 minutes\nConnect from \"Generate Video with VEO3\"\nAdd HTTP Request node\nName: \"Download Video from VEO3\"\nMethod: GET\nURL:\nhttps://api.kie.ai/api/v1/veo/record-info\nQuery Parameter:\ntaskId\nfrom previous node response\nAuthentication: HTTP Header Auth with Kie API key\nConnect from \"Wait for VEO3 Rendering\"\nAdd Google Sheets node (update)\nName: \"URL Final Video\"\nUpdates Google Sheet row with final video URL and status \"done\"\nMap columns accordingly\nConnect from \"Download Video from VEO3\"\nAdd Blotato node\nName: \"Upload Video to BLOTATO\"\nResource: media\nMedia URL: from Google Sheets final_output field\nCredentials: Blotato API key\nConnect from \"URL Final Video\"\nAdd Blotato TikTok node\nName: \"TikTok\"\nPlatform: TikTok\nAccount ID: your TikTok account identifier\nPost content text: caption from Google Sheets\nPost content media URLs: URL from Upload Video node\nSet option \"Is AI Generated\"\nCredentials: Blotato API key\nConnect from \"Upload Video to BLOTATO\"\nAdd Google Sheets node (append or update)\nName: \"Update Status to \"DONE\"\"\nUpdate production status to \"Publish\"\nConnect from \"TikTok\"\nAdd Sticky Notes\nAdd notes with setup instructions, tutorial links, and workflow explanations as per original workflow for documentation clarity.\n5. General Notes & Resources\nNote Content\nContext or Link\n🎥 Watch This Tutorial on YouTube and access full documentation on Notion for detailed setup and usage instructions.\nYouTube:\nhttps://youtu.be/E-_8KZ_FSeY\nNotion Documentation:\nhttps://automatisation.notion.site/Generate-AI-Viral-Videos-with-VEO-3-and-Upload-to-TikTok-2703d6550fd980aa9ea1dd7867c1cccf?source=copy_link\nWorkflow automates entire viral video production pipeline from AI ideation, video generation with VEO 3, to TikTok publishing via Blotato, saving significant manual time and enabling content scaling.\nGeneral description and use case\nOpenAI API key setup instructions: obtain API key from\nhttps://platform.openai.com/api-keys\n, ensure billing is activated, and add the key to n8n credentials.\nOpenAI API Keys page and billing setup\nVEO 3 (Kie AI) integration requires API key creation on the Kie dashboard with base URL\nhttps://api.kie.ai/api/v1/veo/generate\n. Use HTTP header authentication in n8n.\nKie AI (VEO 3) API documentation\nBlotato node installation instructions for TikTok integration: install community node\n@blotato/n8n-nodes-blotato\n, obtain API key from Blotato, and configure in n8n credentials.\nBlotato Community Node and API key setup\nFor support or customization inquiries, contact Dr. Firas on LinkedIn or YouTube.\nLinkedIn:\nhttps://www.linkedin.com/in/dr-firas/\nYouTube:\nhttps://www.youtube.com/@DRFIRASS\nDisclaimer:\nThis text is exclusively derived from an n8n automated workflow. It fully complies with content policies and contains no illegal, offensive, or protected material. All processed data is legal and publicly available.\nCopied to clipboard",
+    "description_full_fr": "Generate AI Viral Videos with VEO 3 and Upload to TikTok\n1. Workflow Overview\nThis workflow automates the creation of viral short-form videos optimized for TikTok using AI-generated concepts and the VEO 3 video generation API. It streamlines the entire content creation pipeline from ideation through video production to publishing on TikTok, enabling users to scale their content output with minimal manual intervention.\nThe workflow is logically divided into three main blocks:\n1.1 Daily Trigger & Idea Generation:\nAutomatically triggers daily to generate a creative video idea using OpenAI GPT-5 and LangChain AI tools, parses structured AI output, and saves metadata to Google Sheets.\n1.2 Video Script Generation & VEO 3 Video Creation:\nBased on the saved idea, an AI agent crafts a detailed video prompt. The prompt is formatted and sent to the VEO 3 API to generate a cinematic vertical video. It includes a wait period to allow rendering, then downloads the finished video.\n1.3 Video Upload & Status Update:\nThe downloaded video URL is stored in Google Sheets, uploaded to Blotato (a TikTok integration node), then posted to TikTok. The production status is updated to reflect completion.\nSupporting nodes include sticky notes with detailed instructions and documentation links.\n2. Block-by-Block Analysis\n2.1 Daily Trigger & Idea Generation\nOverview:\nThis block initiates the workflow on a daily schedule. It generates a creative \"before/after transformation\" video idea using AI, parses the structured output, and records the idea and metadata to a Google Sheet.\nNodes Involved:\nTrigger: Start Daily Content Generation\nTool: Inject Creative Perspective (Idea)\nLLM: Generate Raw Idea (GPT-5)\nGenerate Creative Video Idea (LangChain agent)\nParse AI Output (Idea, Environment, Sound)\nSave Idea & Metadata to Google Sheets\nNode Details:\nTrigger: Start Daily Content Generation\nType: Schedule Trigger\nRole: Automatically triggers the workflow daily (interval set to 1 day)\nInputs: None\nOutputs: Triggers \"Generate Creative Video Idea\" node\nEdge cases: Misconfigured scheduling or disabled workflow can prevent triggering\nTool: Inject Creative Perspective (Idea)\nType: LangChain Tool Node (Think Tool)\nRole: Provides AI with creative perspective to improve idea generation\nInputs: Trigger output\nOutputs: Connected to \"Generate Creative Video Idea\" for enhanced ideation\nEdge cases: AI tool failures or timeouts\nLLM: Generate Raw Idea (GPT-5)\nType: LangChain Chat OpenAI (GPT-5 mini)\nRole: Generates an initial raw before/after transformation idea using GPT-5\nConfiguration: Uses OpenAI API with GPT-5 mini model\nInputs: Invoked by \"Generate Creative Video Idea\"\nOutputs: Raw AI text passed forward\nEdge cases: API quota exceeded, auth errors, model response delays\nGenerate Creative Video Idea\nType: LangChain Agent Node\nRole: Processes raw idea, enriches it with structured rules and formatting for TikTok content\nConfiguration: Complex system message enforcing strict formatting and content rules (e.g., 12 hashtags, emoji, environment, sound prompt)\nInputs: Output from LLM and Think tool nodes\nOutputs: Structured JSON array with keys: Caption, Idea, Environment, Sound, Status\nEdge cases: Parsing errors if AI output does not conform to expected schema\nParse AI Output (Idea, Environment, Sound)\nType: LangChain Structured Output Parser\nRole: Parses the AI-generated JSON array into structured data for further processing\nInputs: AI output string from \"Generate Creative Video Idea\"\nOutputs: Parsed structured JSON with fields usable by downstream nodes\nEdge cases: JSON schema mismatch or malformed AI output\nSave Idea & Metadata to Google Sheets\nType: Google Sheets Node\nRole: Appends the generated idea and metadata (caption, status, prompts) to a Google Sheet for tracking\nConfiguration: Defined column mapping for idea, caption, production status, environment, sound\nInputs: Parsed AI output JSON\nOutputs: Triggers next block (\"Set Master Prompt\")\nEdge cases: Google Sheets API quota, auth expiration, network issues\n2.2 Video Script Generation & VEO 3 Video Creation\nOverview:\nGenerates a detailed video script prompt based on the saved idea metadata, formats it for VEO 3 API consumption, triggers video generation, waits for rendering, and downloads the final video.\nNodes Involved:\nSet Master Prompt\nAI Agent: Generate Video Script\nFormat Prompt\nGenerate Video with VEO3 (HTTP Request)\nWait for VEO3 Rendering\nDownload Video from VEO3\nNode Details:\nSet Master Prompt\nType: Set Node\nRole: Defines a comprehensive JSON master prompt schema describing cinematic video generation parameters such as description, style, camera, lighting, environment, motion, VFX, audio, ending, and format (aspect ratio 9:16)\nConfiguration: Static JSON string assigned to variable\njson_master\nplus model and aspect ratio keys\nInputs: Triggered after saving idea metadata\nOutputs: Passes master prompt to AI Agent node\nEdge cases: Syntax errors in JSON, missing fields affecting downstream processing\nAI Agent: Generate Video Script\nType: LangChain Agent Node\nRole: Uses the previously saved idea, environment, and sound prompts to generate a detailed VEO 3-compatible video prompt JSON with fields such as BEFORE scene, AFTER scene, TRANSITION, CAMERA, LIGHTING, PALETTE, STYLE, and SOUND\nConfiguration: System prompt enforcing strict JSON output with only two top-level keys:\ntitle\nand\nfinal_prompt\n(stringified JSON)\nInputs: Idea metadata + master prompt\nOutputs: Structured AI JSON object parsed by next node\nEdge cases: AI output formatting errors, token limit issues, API failures\nFormat Prompt\nType: Code Node (JavaScript)\nRole: Converts the AI agent’s JSON output into a single JSON string escaped properly to be used as the\nprompt\nparameter for VEO 3 API\nInputs: AI Agent output\nOutputs: Prepared HTTP request body fields (prompt, model, aspectRatio)\nEdge cases: JSON stringify errors, null inputs\nGenerate Video with VEO3\nType: HTTP Request Node\nRole: Sends POST request to VEO 3 API\nhttps://api.kie.ai/api/v1/veo/generate\nto start video generation with the crafted prompt\nConfiguration: Uses HTTP Header Authentication with Kie AI credentials\nInputs: Formatted prompt and model/aspect ratio settings\nOutputs: Returns a\ntaskId\nfor video rendering tracking\nEdge cases: API rate limits, auth token expiration, request timeouts\nWait for VEO3 Rendering\nType: Wait Node\nRole: Pauses workflow execution for 3 minutes to allow VEO 3 to process and render the video\nInputs: Triggered after video generation request\nOutputs: After wait, triggers download node\nEdge cases: Fixed wait time may be insufficient for longer renders\nDownload Video from VEO3\nType: HTTP Request Node\nRole: Queries\nhttps://api.kie.ai/api/v1/veo/record-info\nwith\ntaskId\nto retrieve rendering status and download URL of the generated video\nConfiguration: HTTP Header Authentication with Kie AI credentials\nInputs: taskId from generation response\nOutputs: Returns JSON containing final video URLs\nEdge cases: Video not ready yet, API errors, malformed responses\n2.3 Video Upload & Status Update\nOverview:\nStores the final video URL in Google Sheets, uploads the video to Blotato for TikTok, posts the video to TikTok, and updates the production status in Google Sheets to “DONE”.\nNodes Involved:\nURL Final Video (Google Sheets)\nUpload Video to BLOTATO\nTikTok (Blotato node)\nUpdate Status to \"DONE\" (Google Sheets)\nNode Details:\nURL Final Video\nType: Google Sheets Node\nRole: Updates the same row in Google Sheets with the final video URL and marks production as complete (“done”)\nInputs: Video download response JSON\nOutputs: Triggers video upload node\nEdge cases: Sheet update conflicts, API limits\nUpload Video to BLOTATO\nType: Blotato Node (Community node)\nRole: Uploads the video media URL to Blotato platform, preparing it for TikTok posting\nConfiguration: Uses Blotato API credentials, resource set to \"media\"\nInputs: Final video URL\nOutputs: Provides media URL required by TikTok posting node\nEdge cases: Upload failures, network issues, incorrect credentials\nTikTok\nType: Blotato Node (TikTok integration)\nRole: Creates a TikTok post with the uploaded video and caption from Google Sheets, marking the post as AI-generated\nConfiguration: TikTok platform, account ID parameter, caption text pulled from saved idea metadata, media URL from previous node\nInputs: Uploaded media URL and caption\nOutputs: Triggers status update node\nEdge cases: TikTok API limits, authentication errors, content policy rejections\nUpdate Status to \"DONE\"\nType: Google Sheets Node\nRole: Updates the production status column in Google Sheets to “Publish” indicating completion of the entire workflow cycle\nInputs: Confirmation from TikTok post node\nOutputs: Workflow ends here for this iteration\nEdge cases: Sheet locking, API errors\n3. Summary Table\nNode Name\nNode Type\nFunctional Role\nInput Node(s)\nOutput Node(s)\nSticky Note\nTrigger: Start Daily Content Generation\nSchedule Trigger\nInitiates daily workflow trigger\nNone\nGenerate Creative Video Idea\nTool: Inject Creative Perspective (Idea)\nLangChain Tool (Think)\nAdds creative perspective to AI idea\nTrigger: Start Daily Content Generation\nGenerate Creative Video Idea\nLLM: Generate Raw Idea (GPT-5)\nLangChain LLM Chat OpenAI\nGenerates raw AI idea using GPT-5\nGenerate Creative Video Idea\nGenerate Creative Video Idea\nGenerate Creative Video Idea\nLangChain Agent\nProduces structured video idea JSON\nTool: Inject Creative Perspective, LLM: Generate Raw Idea\nParse AI Output (Idea, Environment, Sound)\nParse AI Output (Idea, Environment, Sound)\nLangChain Output Parser Structured\nParses AI JSON output into structured data\nGenerate Creative Video Idea\nSave Idea & Metadata to Google Sheets\nSave Idea & Metadata to Google Sheets\nGoogle Sheets\nSaves generated idea and metadata\nParse AI Output\nSet Master Prompt\nSet Master Prompt\nSet Node\nDefines master prompt JSON schema\nSave Idea & Metadata to Google Sheets\nAI Agent: Generate Video Script\nAI Agent: Generate Video Script\nLangChain Agent\nGenerates detailed video script prompt\nSet Master Prompt, OpenAI Chat Model, Think, Structured Output Parser\nFormat Prompt\nFormat Prompt\nCode\nFormats prompt JSON string for API\nAI Agent: Generate Video Script\nGenerate Video with VEO3\nGenerate Video with VEO3\nHTTP Request\nCalls VEO 3 API to generate video\nFormat Prompt\nWait for VEO3 Rendering\nWait for VEO3 Rendering\nWait\nWaits fixed time for video rendering\nGenerate Video with VEO3\nDownload Video from VEO3\nDownload Video from VEO3\nHTTP Request\nRetrieves video URL after rendering\nWait for VEO3 Rendering\nURL Final Video\nURL Final Video\nGoogle Sheets\nUpdates Google Sheet with final video URL\nDownload Video from VEO3\nUpload Video to BLOTATO\nUpload Video to BLOTATO\nBlotato Node\nUploads video to Blotato for TikTok\nURL Final Video\nTikTok\nTikTok\nBlotato Node\nPosts video to TikTok with caption\nUpload Video to BLOTATO\nUpdate Status to \"DONE\"\nUpdate Status to \"DONE\"\nGoogle Sheets\nMarks production status as complete\nTikTok\nNone\nSticky Note8\nSticky Note\nContains tutorial video, documentation link, and detailed setup instructions\nNone\nNone\nSee links for tutorial and setup:\nhttps://automatisation.notion.site/Generate-AI-Viral-Videos-with-VEO-3-and-Upload-to-TikTok-2703d6550fd980aa9ea1dd7867c1cccf?source=copy_link\nSticky Note\nSticky Note\nExplains workflow purpose and use case\nNone\nNone\nExplains entire workflow’s problem solving scope\nSticky Note7\nSticky Note\nMarks input idea section\nNone\nNone\nSticky Note9\nSticky Note\nMarks TikTok publish step\nNone\nNone\nSticky Note1\nSticky Note\nMarks VEO3 video generation step\nNone\nNone\n4. Reproducing the Workflow from Scratch\nCreate a Schedule Trigger node\nType: Schedule Trigger\nConfigure to trigger daily (interval: 1 day)\nName: \"Trigger: Start Daily Content Generation\"\nAdd LangChain Think Tool node\nType: LangChain Tool Think\nName: \"Tool: Inject Creative Perspective (Idea)\"\nConnect from Schedule Trigger node\nAdd LangChain Chat OpenAI node\nType: LangChain LLM Chat OpenAI\nModel: GPT-5 mini\nName: \"LLM: Generate Raw Idea (GPT-5)\"\nConnect from Think Tool node\nSet OpenAI credentials with valid API key\nAdd LangChain Agent node for idea generation\nName: \"Generate Creative Video Idea\"\nSet system message with detailed prompt enforcing strict output format (see Block 2.1)\nConnect inputs from LLM: Generate Raw Idea and Think Tool nodes\nAdd LangChain Output Parser Structured node\nName: \"Parse AI Output (Idea, Environment, Sound)\"\nConfigure JSON schema example matching expected AI output structure\nConnect from \"Generate Creative Video Idea\"\nAdd Google Sheets node (append)\nName: \"Save Idea & Metadata to Google Sheets\"\nConfigure document ID and sheet name\nMap columns: id (ROW()-1), idea, caption, production status, environment_prompt, sound_prompt\nConnect from \"Parse AI Output\"\nAdd Set node\nName: \"Set Master Prompt\"\nCreate JSON master prompt variable with detailed cinematic video schema (see Block 2.2)\nSet model to \"veo3_fast\" and aspectRatio to \"9:16\"\nConnect from \"Save Idea & Metadata to Google Sheets\"\nAdd LangChain Agent node for video script generation\nName: \"AI Agent: Generate Video Script\"\nUse system message enforcing output of JSON object with\ntitle\nand\nfinal_prompt\nkeys\nInputs: idea, environment_prompt, sound_prompt from Google Sheets; master prompt from Set node\nConnect from \"Set Master Prompt\" node\nProvide OpenAI GPT-4.1-mini credentials\nAdd Code node\nName: \"Format Prompt\"\nJavaScript code: stringify and escape the\nfinal_prompt\nfor API request (see Block 2.2)\nConnect from \"AI Agent: Generate Video Script\"\nAdd HTTP Request node\nName: \"Generate Video with VEO3\"\nMethod: POST\nURL:\nhttps://api.kie.ai/api/v1/veo/generate\nBody: JSON with keys\nprompt\n,\nmodel\n,\naspectRatio\nusing expressions from \"Format Prompt\"\nAuthentication: HTTP Header Auth with Kie AI API key\nConnect from \"Format Prompt\"\nAdd Wait node\nName: \"Wait for VEO3 Rendering\"\nDuration: 3 minutes\nConnect from \"Generate Video with VEO3\"\nAdd HTTP Request node\nName: \"Download Video from VEO3\"\nMethod: GET\nURL:\nhttps://api.kie.ai/api/v1/veo/record-info\nQuery Parameter:\ntaskId\nfrom previous node response\nAuthentication: HTTP Header Auth with Kie API key\nConnect from \"Wait for VEO3 Rendering\"\nAdd Google Sheets node (update)\nName: \"URL Final Video\"\nUpdates Google Sheet row with final video URL and status \"done\"\nMap columns accordingly\nConnect from \"Download Video from VEO3\"\nAdd Blotato node\nName: \"Upload Video to BLOTATO\"\nResource: media\nMedia URL: from Google Sheets final_output field\nCredentials: Blotato API key\nConnect from \"URL Final Video\"\nAdd Blotato TikTok node\nName: \"TikTok\"\nPlatform: TikTok\nAccount ID: your TikTok account identifier\nPost content text: caption from Google Sheets\nPost content media URLs: URL from Upload Video node\nSet option \"Is AI Generated\"\nCredentials: Blotato API key\nConnect from \"Upload Video to BLOTATO\"\nAdd Google Sheets node (append or update)\nName: \"Update Status to \"DONE\"\"\nUpdate production status to \"Publish\"\nConnect from \"TikTok\"\nAdd Sticky Notes\nAdd notes with setup instructions, tutorial links, and workflow explanations as per original workflow for documentation clarity.\n5. General Notes & Resources\nNote Content\nContext or Link\n🎥 Watch This Tutorial on YouTube and access full documentation on Notion for detailed setup and usage instructions.\nYouTube:\nhttps://youtu.be/E-_8KZ_FSeY\nNotion Documentation:\nhttps://automatisation.notion.site/Generate-AI-Viral-Videos-with-VEO-3-and-Upload-to-TikTok-2703d6550fd980aa9ea1dd7867c1cccf?source=copy_link\nWorkflow automates entire viral video production pipeline from AI ideation, video generation with VEO 3, to TikTok publishing via Blotato, saving significant manual time and enabling content scaling.\nGeneral description and use case\nOpenAI API key setup instructions: obtain API key from\nhttps://platform.openai.com/api-keys\n, ensure billing is activated, and add the key to n8n credentials.\nOpenAI API Keys page and billing setup\nVEO 3 (Kie AI) integration requires API key creation on the Kie dashboard with base URL\nhttps://api.kie.ai/api/v1/veo/generate\n. Use HTTP header authentication in n8n.\nKie AI (VEO 3) API documentation\nBlotato node installation instructions for TikTok integration: install community node\n@blotato/n8n-nodes-blotato\n, obtain API key from Blotato, and configure in n8n credentials.\nBlotato Community Node and API key setup\nFor support or customization inquiries, contact Dr. Firas on LinkedIn or YouTube.\nLinkedIn:\nhttps://www.linkedin.com/in/dr-firas/\nYouTube:\nhttps://www.youtube.com/@DRFIRASS\nDisclaimer:\nThis text is exclusively derived from an n8n automated workflow. It fully complies with content policies and contains no illegal, offensive, or protected material. All processed data is legal and publicly available.\nCopied to clipboard\n\n",
+    "category": "AI",
+    "complexity": "Advanced",
+    "tags_en": [],
+    "tags_fr": [],
+    "author": "Dr. Firas",
+    "date": "Unknown",
+    "url_original": "https://n8nworkflows.xyz/workflows/generate-ai-viral-videos-with-veo-3-and-upload-to-tiktok-8642",
+    "nodes_count": 24
+  },
+  "workflow_json": {
+    "id": "AtyhZTTVbhFDWFhM",
+    "meta": {
+      "instanceId": "a2b23892dd6989fda7c1209b381f5850373a7d2b85609624d7c2b7a092671d44"
+    },
+    "name": "💥 Generate AI Viral Videos with VEO 3 and Upload to TikTok ",
+    "tags": [],
+    "nodes": [
+      {
+        "id": "958b1b16-4eb0-436a-ac87-b5d529e414bc",
+        "name": "Trigger: Start Daily Content Generation",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "position": [
+          -240,
+          112
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {}
+            ]
+          }
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "3d6bbc87-c411-434a-aa74-7e8e9893acc7",
+        "name": "Tool: Inject Creative Perspective (Idea)",
+        "type": "@n8n/n8n-nodes-langchain.toolThink",
+        "position": [
+          240,
+          384
+        ],
+        "parameters": {},
+        "typeVersion": 1
+      },
+      {
+        "id": "824f3d5a-c7c2-42b4-ba28-24ba4cbc972b",
+        "name": "Parse AI Output (Idea, Environment, Sound)",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "position": [
+          416,
+          384
+        ],
+        "parameters": {
+          "jsonSchemaExample": "[\n  {\n    \"Caption\": \"Diver Removes Nets Off Whale 🐋 #whalerescue #marinelife #oceanrescue #seahelpers #love #nature #instagood #explore #viral #savenature #oceanguardians #cleanoceans\",\n    \"Idea\": \"Diver carefully cuts tangled net from distressed whale in open sea\",\n    \"Environment\": \"Open ocean, sunlight beams through water, diver and whale, cinematic realism\",\n    \"Sound\": \"Primary sound description under 15 words\",\n    \"Status\": \"for production\"\n  }\n]\n"
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "4fc884ca-3611-4148-9f22-e6f6543363d0",
+        "name": "Save Idea & Metadata to Google Sheets",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          592,
+          112
+        ],
+        "parameters": {
+          "columns": {
+            "value": {
+              "id": "==ROW()-1",
+              "idea": "={{ $json.output[0].Idea }}",
+              "caption": "={{ $json.output[0].Caption }}",
+              "production": "={{ $json.output[0].Status }}",
+              "sound_prompt": "={{ $json.output[0].Sound }}",
+              "environment_prompt": "={{ $json.output[0].Environment }}"
+            },
+            "schema": [
+              {
+                "id": "id",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "id",
+                "defaultMatch": true,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "idea",
+                "type": "string",
+                "display": true,
+                "required": false,
+                "displayName": "idea",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "caption",
+                "type": "string",
+                "display": true,
+                "required": false,
+                "displayName": "caption",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "production",
+                "type": "string",
+                "display": true,
+                "required": false,
+                "displayName": "production",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "environment_prompt",
+                "type": "string",
+                "display": true,
+                "required": false,
+                "displayName": "environment_prompt",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "sound_prompt",
+                "type": "string",
+                "display": true,
+                "required": false,
+                "displayName": "sound_prompt",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "final_output",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "final_output",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              }
+            ],
+            "mappingMode": "defineBelow",
+            "matchingColumns": [
+              "id"
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {},
+          "operation": "append",
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          },
+          "documentId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "51us92xkOlrvArhV",
+            "name": "Google Sheets account"
+          }
+        },
+        "typeVersion": 4.5
+      },
+      {
+        "id": "5017f6ed-03cb-408c-bd47-97008e2d7352",
+        "name": "Generate Creative Video Idea",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          160,
+          112
+        ],
+        "parameters": {
+          "text": "=Générer un concept créatif impliquant :\n\n[[\nUne transformation AVANT/APRÈS saisissante d’un seul sujet non humain (objet, environnement ou phénomène naturel). Le concept doit préciser :\n- état AVANT : clair, visuellement distinct\n- Etat APRÈS : résultat contrasté\n- TRANSITION : un mot (par exemple, morph, hard cut, timelapse, glitch, wipe, burst)\n- Balises STYLE : 2 à 3 adjectifs visuels (par exemple, cinématique, macro, néon, minimaliste)\n- PALETTE : 2 à 3 mots-clés de couleurs\n- CAMÉRA : un mouvement (par exemple, poussée lente, descendante, Dolly-In)\n- ÉCLAIRAGE : un descripteur (par exemple, rétroéclairage doux, lumière maussade du bord)\n\nÉvitez les humains, les marques et les clichés (désordre → salle blanche, burger → salade, glow-up générique). Garantit une nouveauté et une clarté visuelle immédiate adaptée à la verticale 9:16.\n\nVotre réponse doit suivre exactement cette structure sur une seule ligne :\n\n\"AVANT : [phrase courte] → APRÈS : [phrase courte] | TRANSITION : [style] | STYLE : [tag1, tag2] | PALETTE : [couleur1, couleur2] | CAMÉRA : [mouvement] | ÉCLAIRAGE : [descripteur]\"\n]]\n\nRéfléchissez bien avant de répondre pour garantir l’originalité et l’attrait visuel.\n\nUtilisez l'outil Think pour examiner votre sortie",
+          "options": {
+            "systemMessage": "=**Role:**  \nYou are an AI designed to generate **one original BEFORE/AFTER transformation video concept** optimized for TikTok and the VEO 3 API. Your output must be formatted as a **single-line JSON array** and follow the rules below exactly.\n\n---\n\n### RULES\n\n1. **Number of ideas**  \n   - Return **only one idea**.\n\n2. **Theme**  \n   - The user will always provide the theme: “Before/After transformation.”  \n   - Every idea must clearly show a striking **contrast** between the BEFORE and AFTER states.\n\n3. **Idea**  \n   - Maximum 15 words.  \n   - Describe the transformation in a cinematic, visually appealing way.\n\n4. **Caption**  \n   - Short, punchy, viral-friendly.  \n   - Include **one emoji**.  \n   - Exactly **12 hashtags** in this order:  \n     1. 4 transformation-relevant hashtags  \n     2. 4 all-time most popular hashtags  \n     3. 4 currently trending hashtags (based on live research)  \n   - All in lowercase.\n\n5. **Environment**  \n   - Maximum 20 words.  \n   - Must match the action in the Idea exactly.  \n   - Specify setting (room, landscape, lab…), visual details (lighting, textures, transitions…), and style (cinematic, stylized, timelapse, slow-motion…).\n\n6. **Sound**  \n   - Maximum 15 words.  \n   - Describe the sound design (e.g., “beat drop at transition,” “soft rain before, energetic music after”).\n\n7. **Status**  \n   - Always set to `\"for production\"`.\n\n---\n\n### OUTPUT FORMAT (single-line JSON array)\n\n```json\n[\n  {\n    \"Caption\": \"Your short viral title with emoji #4_topic_hashtags #4_all_time_popular_hashtags #4_trending_hashtags\",\n    \"Idea\": \"Your before/after transformation idea under 15 words\",\n    \"Environment\": \"Your vivid setting under 20 words matching the action\",\n    \"Sound\": \"Your primary sound description under 15 words\",\n    \"Status\": \"for production\"\n  }\n]\n"
+          },
+          "promptType": "define",
+          "hasOutputParser": true
+        },
+        "typeVersion": 1.9
+      },
+      {
+        "id": "d167d2b8-320e-4ea8-9f83-fae9840db585",
+        "name": "LLM: Generate Raw Idea (GPT-5)",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "position": [
+          64,
+          384
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-5-mini",
+            "cachedResultName": "gpt-5-mini"
+          },
+          "options": {}
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "6h3DfVhNPw9I25nO",
+            "name": "OpenAi account"
+          }
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "9c487748-bee0-40b8-b8d4-0deff7294f60",
+        "name": "OpenAI Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "position": [
+          -224,
+          816
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4.1-mini"
+          },
+          "options": {}
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "6h3DfVhNPw9I25nO",
+            "name": "OpenAi account"
+          }
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "6434e3ed-7f71-467c-9a7c-625feb9024c9",
+        "name": "Think",
+        "type": "@n8n/n8n-nodes-langchain.toolThink",
+        "position": [
+          -80,
+          816
+        ],
+        "parameters": {},
+        "typeVersion": 1
+      },
+      {
+        "id": "854036f1-bca7-4252-be3a-1095526ee614",
+        "name": "Structured Output Parser",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "position": [
+          48,
+          816
+        ],
+        "parameters": {
+          "jsonSchemaExample": "{\n  \"title\": \"string\",\n  \"final_prompt\": \"string\"\n}\n"
+        },
+        "typeVersion": 1.3
+      },
+      {
+        "id": "be8ad1f9-2de7-4c61-810a-fa3ab483835d",
+        "name": "Set Master Prompt",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          592,
+          352
+        ],
+        "parameters": {
+          "options": {},
+          "assignments": {
+            "assignments": [
+              {
+                "id": "cc2e0500-57b1-4615-82cb-1c950e5f2ec4",
+                "name": "json_master",
+                "type": "string",
+                "value": "={\n  \"description\": \"Brief narrative description of the scene, focusing on key visual storytelling and product transformation.\",\n  \"style\": \"cinematic | photorealistic | stylized | gritty | elegant\",\n  \"camera\": {\n    \"type\": \"fixed | dolly | Steadicam | crane combo\",\n    \"movement\": \"describe any camera moves like slow push-in, pan, orbit\",\n    \"lens\": \"optional lens type or focal length for cinematic effect\"\n  },\n  \"lighting\": {\n    \"type\": \"natural | dramatic | high-contrast\",\n    \"sources\": \"key lighting sources (sunset, halogen, ambient glow...)\",\n    \"FX\": \"optional VFX elements like fog, reflections, flares\"\n  },\n  \"environment\": {\n    \"location\": \"describe location or room (kitchen, desert, basketball court...)\",\n    \"set_pieces\": [\n      \"list of key background or prop elements\",\n      \"e.g. hardwood floors, chain-link fence, velvet surface\"\n    ],\n    \"mood\": \"describe the ambient atmosphere (moody, clean, epic...)\"\n  },\n  \"elements\": [\n    \"main physical items involved (product box, accessories, vehicles...)\",\n    \"include brand visibility (logos, packaging, texture...)\"\n  ],\n  \"subject\": {\n    \"character\": {\n      \"description\": \"optional – physical description, outfit\",\n      \"pose\": \"optional – position or gesture\",\n      \"lip_sync_line\": \"optional – spoken line if there’s a voiceover\"\n    },\n    \"product\": {\n      \"brand\": \"Brand name\",\n      \"model\": \"Product model or name\",\n      \"action\": \"description of product transformation or assembly\"\n    }\n  },\n  \"motion\": {\n    \"type\": \"e.g. transformation, explosion, vortex\",\n    \"details\": \"step-by-step visual flow of how elements move or evolve\"\n  },\n  \"VFX\": {\n    \"transformation\": \"optional – describe style (neon trails, motion blur...)\",\n    \"impact\": \"optional – e.g. shockwave, glow, distortion\",\n    \"particles\": \"optional – embers, sparks, thread strands...\",\n    \"environment\": \"optional – VFX affecting the scene (ripples, wind...)\"\n  },\n  \"audio\": {\n    \"music\": \"optional – cinematic score, trap beat, ambient tone\",\n    \"sfx\": [\n      \"list of sound effects (zip, pop, woosh...)\"\n    ],\n    \"ambience\": \"optional – background soundscape (traffic, wind...)\",\n    \"voiceover\": {\n      \"delivery\": \"tone and style (confident, whisper, deep...)\",\n      \"line\": \"text spoken if applicable\"\n    }\n  },\n  \"ending\": \"Final shot description – what is seen or felt at the end (freeze frame, logo pulse, glow...)\",\n  \"text\": \"none | overlay | tagline | logo pulse at end only\",\n  \"format\": \"16:9 | 4k | vertical\",\n  \"keywords\": [\n    \"brand\",\n    \"scene style\",\n    \"motion type\",\n    \"camera style\",\n    \"sound mood\",\n    \"target theme\"\n  ]\n}\n"
+              },
+              {
+                "id": "3c6ea609-e426-46d3-8617-2e289a833a64",
+                "name": "model",
+                "type": "string",
+                "value": "veo3_fast"
+              },
+              {
+                "id": "f15acf81-840c-4e09-9ff3-1647b634875f",
+                "name": "aspectRatio",
+                "type": "string",
+                "value": "9:16"
+              }
+            ]
+          }
+        },
+        "typeVersion": 3.4
+      },
+      {
+        "id": "d823f8e0-f1fe-48d3-bcd8-d312c23c06dc",
+        "name": "AI Agent: Generate Video Script",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          -176,
+          592
+        ],
+        "parameters": {
+          "text": "=Créez une invite vidéo de transformation AVANT/APRÈS en utilisant l'idée fournie.\n\n**Entrée**\n\n- idée : {{ $('Enregistrer l'idée et les métadonnées dans Google Sheets').item.json.idea }}\n- environnement : {{ $('Enregistrer l'idée et les métadonnées dans Google Sheets').item.json.environment_prompt }}\n- son : {{ $('Enregistrer l'idée et les métadonnées dans Google Sheets').item.json.sound_prompt }}\n\n**Règles**\n- Le style doit être cinématographique, visuellement frappant et optimisé pour le contenu TikTok vertical 9:16.\n- Inclut explicitement : la scène AVANT, la scène APRÈS, le style TRANSITION, le mouvement de la CAMÉRA, l'ÉCLAIRAGE, la PALETTE DE COULEURS et l'HUMEUR.\n- Modèle par défaut : `veo3_fast` (sauf indication contraire).\n- Afficher uniquement **un objet JSON** avec les clés : `title` et `final_prompt`.\n- Utilisez l'outil Think pour examiner votre sortie",
+          "options": {
+            "systemMessage": "=\"system_prompt:\n  ## SYSTEM PROMPT: Structured Transformation Video Prompt Generator\n  A - Ask:\n    Generate a structured BEFORE/AFTER transformation video prompt for VEO 3 cinematic generation, strictly based on the master schema provided in: {{ $json.json_master }}.\n    The final result must be a JSON object with exactly two top-level keys: `title` and `final_prompt`.\n\n  G - Guidance:\n    role: Creative Director\n    output_count: 1\n    character_limit: None\n    constraints:\n      - The output must be valid JSON.\n      - The `title` field should contain a short, descriptive and unique title (max 15 words).\n      - The `final_prompt` field must contain a **single-line JSON string** that follows the exact structure of {{ $json.json_master }} with all fields preserved.\n      - The `final_prompt` string must clearly describe: BEFORE scene, AFTER scene, TRANSITION, CAMERA, LIGHTING, PALETTE, STYLE, and SOUND.\n      - Do not include any explanations, markdown, or extra text — only the JSON object.\n      - Escape all inner quotes in the `final_prompt` string so it is valid as a stringified JSON inside another JSON.\n    tool_usage:\n      - Ensure consistent alignment across all fields (camera, lighting, transition, palette, etc.).\n      - Maintain full structure even for optional fields (use \"none\", \"\", or [] as needed).\n\n  N - Notation:\n    format: JSON\n    expected_output:\n      {\n        \"title\": \"A unique short title for the transformation\",\n        \"final_prompt\": \"{...stringified JSON of the full prompt...}\"\n      }\n\"\n"
+          },
+          "promptType": "define",
+          "hasOutputParser": true
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "ca35eeb6-ad4a-43a4-932d-982ea8c5b34c",
+        "name": "Generate Video with VEO3",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          592,
+          592
+        ],
+        "parameters": {
+          "url": "https://api.kie.ai/api/v1/veo/generate",
+          "body": "={\n  \"prompt\": {{ $json.prompt }},\n  \"model\": \"{{ $('Set Master Prompt').item.json.model }}\",\n  \"aspectRatio\": \"{{ $('Set Master Prompt').item.json.aspectRatio }}\"\n}",
+          "method": "POST",
+          "options": {},
+          "sendBody": true,
+          "contentType": "raw",
+          "authentication": "genericCredentialType",
+          "rawContentType": "application/json",
+          "genericAuthType": "httpHeaderAuth"
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ho8ZjaYj1SY0icGT",
+            "name": "Kie AI"
+          }
+        },
+        "typeVersion": 4.2
+      },
+      {
+        "id": "58b989a8-21a0-41a3-b6b0-1962720e0440",
+        "name": "Wait for VEO3 Rendering",
+        "type": "n8n-nodes-base.wait",
+        "position": [
+          320,
+          784
+        ],
+        "webhookId": "f8f1a8a7-0870-4f09-b732-425a8937f229",
+        "parameters": {
+          "unit": "minutes",
+          "amount": 3
+        },
+        "typeVersion": 1.1
+      },
+      {
+        "id": "e7a619a0-035f-4506-a92e-c501a7e63786",
+        "name": "Download Video from VEO3",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [
+          -256,
+          1024
+        ],
+        "parameters": {
+          "url": "https://api.kie.ai/api/v1/veo/record-info",
+          "options": {},
+          "sendQuery": true,
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "taskId",
+                "value": "={{ $('Generate Video with VEO3').item.json.data.taskId }}"
+              }
+            ]
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "ho8ZjaYj1SY0icGT",
+            "name": "Kie AI"
+          }
+        },
+        "typeVersion": 4.2
+      },
+      {
+        "id": "4fdbd573-2ff1-48e5-8a60-0138900ca4ab",
+        "name": "Format Prompt",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          320,
+          592
+        ],
+        "parameters": {
+          "jsCode": "const structuredPrompt = $input.first().json.output.final_prompt;\nreturn {\n  json: {\n    prompt: JSON.stringify(structuredPrompt), // this escapes it correctly!\n    model: \"veo3_fast\",\n    aspectRatio: \"9:16\"\n  }\n};\n"
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "b2090577-e3e8-46e2-861d-5ad595335324",
+        "name": "URL Final Video",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          -48,
+          1024
+        ],
+        "parameters": {
+          "columns": {
+            "value": {
+              "idea": "={{ $('Save Idea & Metadata to Google Sheets').item.json.idea }}",
+              "production": "done",
+              "final_output": "={{ $json.data.response.resultUrls[0] }}"
+            },
+            "schema": [
+              {
+                "id": "id",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "id",
+                "defaultMatch": true,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "idea",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "idea",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "caption",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "caption",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "production",
+                "type": "string",
+                "display": true,
+                "required": false,
+                "displayName": "production",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "environment_prompt",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "environment_prompt",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "sound_prompt",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "sound_prompt",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "final_output",
+                "type": "string",
+                "display": true,
+                "required": false,
+                "displayName": "final_output",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "row_number",
+                "type": "number",
+                "display": true,
+                "removed": true,
+                "readOnly": true,
+                "required": false,
+                "displayName": "row_number",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              }
+            ],
+            "mappingMode": "defineBelow",
+            "matchingColumns": [
+              "idea"
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {},
+          "operation": "update",
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          },
+          "documentId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "51us92xkOlrvArhV",
+            "name": "Google Sheets account"
+          }
+        },
+        "typeVersion": 4.5
+      },
+      {
+        "id": "5133195b-ccd0-4749-a871-26c56c68b019",
+        "name": "Upload Video to BLOTATO",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          160,
+          1024
+        ],
+        "parameters": {
+          "mediaUrl": "={{ $json.final_output }}",
+          "resource": "media"
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "NtMnRSKAAN5u9lyc",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "2f892860-6576-4c64-89a7-213162a623c2",
+        "name": "Update Status to \"DONE\"",
+        "type": "n8n-nodes-base.googleSheets",
+        "position": [
+          592,
+          1024
+        ],
+        "parameters": {
+          "columns": {
+            "value": {
+              "idea": "={{ $('Save Idea & Metadata to Google Sheets').first().json.idea }}",
+              "production": "Publish"
+            },
+            "schema": [
+              {
+                "id": "id",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "id",
+                "defaultMatch": true,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "idea",
+                "type": "string",
+                "display": true,
+                "removed": false,
+                "required": false,
+                "displayName": "idea",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "caption",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "caption",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "production",
+                "type": "string",
+                "display": true,
+                "required": false,
+                "displayName": "production",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "environment_prompt",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "environment_prompt",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "sound_prompt",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "sound_prompt",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "final_output",
+                "type": "string",
+                "display": true,
+                "removed": true,
+                "required": false,
+                "displayName": "final_output",
+                "defaultMatch": false,
+                "canBeUsedToMatch": true
+              }
+            ],
+            "mappingMode": "defineBelow",
+            "matchingColumns": [
+              "idea"
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {},
+          "operation": "appendOrUpdate",
+          "sheetName": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          },
+          "documentId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          }
+        },
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "51us92xkOlrvArhV",
+            "name": "Google Sheets account"
+          }
+        },
+        "typeVersion": 4.5
+      },
+      {
+        "id": "1825853b-1c3e-479b-acff-4d2804cf10d9",
+        "name": "TikTok",
+        "type": "@blotato/n8n-nodes-blotato.blotato",
+        "position": [
+          368,
+          1024
+        ],
+        "parameters": {
+          "options": {},
+          "platform": "tiktok",
+          "accountId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "="
+          },
+          "postContentText": "={{ $('Save Idea & Metadata to Google Sheets').first().json.caption }}",
+          "postContentMediaUrls": "={{ $json.url }}",
+          "postCreateTiktokOptionIsAiGenerated": true
+        },
+        "credentials": {
+          "blotatoApi": {
+            "id": "NtMnRSKAAN5u9lyc",
+            "name": "Blotato account"
+          }
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "007b1c04-31b3-4b5d-aceb-a5a650908dee",
+        "name": "Sticky Note8",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -864,
+          -80
+        ],
+        "parameters": {
+          "width": 528,
+          "height": 1328,
+          "content": "## 🎥 Watch This Tutorial\n\n@[youtube](E-_8KZ_FSeY)\n\n\n### 📥  [Open full documentation on Notion](https://automatisation.notion.site/Generate-AI-Viral-Videos-with-VEO-3-and-Upload-to-TikTok-2703d6550fd980aa9ea1dd7867c1cccf?source=copy_link)\n\n---\n### 1. Set Up OpenAI Connection\n#### Get Your API Key\n1. Visit the [OpenAI API Keys](https://platform.openai.com/api-keys) page.\n2. Go to [OpenAI Billing](https://platform.openai.com/settings/organization/billing/overview).\n3. Add funds to your billing account.\n4. Copy your API key into your **OpenAI credentials** in n8n (or your chosen platform).\n\n---\n### 2. Setup\n1. Import this workflow into your n8n instance.  \n2. Connect your Google Sheets, Gmail, and Google Calendar credentials. Tutorial: Configure Your Google Sheets, Gmail, Calendar [Credentials](https://youtu.be/fDzVmdw7bNU)\n3. Connect Your Data in Google Sheets. Data must follow this format: [Sample Sheets Data](https://docs.google.com/spreadsheets/d/1pdMs3jWqiYQn3BNdmPhFYhbelQD3jRVtm72ECoCxo0o/copy)\n4. Test the workflow using the **Connected Chat Trigger** node to start conversations with the AI Agent.  \n\n---\n### 3. Integrate VEO 3 (Kie) into n8n\n1. Sign up or log in to the **Kie (VEO 3)** dashboard.  \n2. Go to **API Keys** → **Create new key** → copy the key (keep it secret).  \n3. Base API URL: `https://api.kie.ai/api/v1/veo/generate`.\n\n---\n### 4. Install the Blotato node in n8n (Community Nodes)\n1. In n8n, open **Settings → Community Nodes**.\n2. Click **Install**, then add: `@blotato/n8n-nodes-blotato`. \n3. Log in to **Blotato**.\n4. Go to **Settings → API Keys**.\n5. Go to **Credentials → New**.\n6. Choose **Blotato API** (provided by the community node you installed).\n\n\n---\n## 📬 Need Help or Want to Customize This?\n**Contact me for consulting and support:** [LinkedIn](https://www.linkedin.com/in/dr-firas/) / [YouTube](https://www.youtube.com/@DRFIRASS)  \n\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "98797c5f-7a99-4f61-ab61-47772925ed0b",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -336,
+          -80
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 1152,
+          "height": 1328,
+          "content": "## Generate AI Viral Videos with VEO3 and Upload to TikTok (By Dr. Firas)\n### What problem is this workflow solving? / Use case\nCreating short-form video content that stands out takes time: ideation, scriptwriting, video generation, and publishing. This workflow automates the entire pipeline — from idea generation to TikTok upload — enabling you to scale your content strategy and focus on creativity rather than repetitive tasks.\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "c13b5356-80d0-4d62-a3e8-a65a32f730f9",
+        "name": "Sticky Note7",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -304,
+          48
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 1104,
+          "height": 480,
+          "content": "## | INPUT: Starting Idea Section\n\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "f7433a4a-89e0-41c7-a0b2-55fcdeeac374",
+        "name": "Sticky Note9",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -304,
+          960
+        ],
+        "parameters": {
+          "color": 3,
+          "width": 1104,
+          "height": 256,
+          "content": "## | Step 2 — Publish Video to TikTok\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "7412d83f-e434-4e72-ae12-fd2d97ba05e6",
+        "name": "Sticky Note1",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -304,
+          528
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 1104,
+          "height": 432,
+          "content": "## | Step 1 — Generate Video with VEO3"
+        },
+        "typeVersion": 1
+      }
+    ],
+    "active": false,
+    "pinData": {},
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "versionId": "b1fa6d8c-9f83-4ae1-8c99-952ef3e97229",
+    "connections": {
+      "Think": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent: Generate Video Script",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "TikTok": {
+        "main": [
+          [
+            {
+              "node": "Update Status to \"DONE\"",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Prompt": {
+        "main": [
+          [
+            {
+              "node": "Generate Video with VEO3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "URL Final Video": {
+        "main": [
+          [
+            {
+              "node": "Upload Video to BLOTATO",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent: Generate Video Script",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set Master Prompt": {
+        "main": [
+          [
+            {
+              "node": "AI Agent: Generate Video Script",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload Video to BLOTATO": {
+        "main": [
+          [
+            {
+              "node": "TikTok",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait for VEO3 Rendering": {
+        "main": [
+          [
+            {
+              "node": "Download Video from VEO3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download Video from VEO3": {
+        "main": [
+          [
+            {
+              "node": "URL Final Video",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Video with VEO3": {
+        "main": [
+          [
+            {
+              "node": "Wait for VEO3 Rendering",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Structured Output Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "AI Agent: Generate Video Script",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Creative Video Idea": {
+        "main": [
+          [
+            {
+              "node": "Save Idea & Metadata to Google Sheets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "LLM: Generate Raw Idea (GPT-5)": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Generate Creative Video Idea",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent: Generate Video Script": {
+        "main": [
+          [
+            {
+              "node": "Format Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Idea & Metadata to Google Sheets": {
+        "main": [
+          [
+            {
+              "node": "Set Master Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Trigger: Start Daily Content Generation": {
+        "main": [
+          [
+            {
+              "node": "Generate Creative Video Idea",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tool: Inject Creative Perspective (Idea)": {
+        "ai_tool": [
+          [
+            {
+              "node": "Generate Creative Video Idea",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse AI Output (Idea, Environment, Sound)": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Generate Creative Video Idea",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+}

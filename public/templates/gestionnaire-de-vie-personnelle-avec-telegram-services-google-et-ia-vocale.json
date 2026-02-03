@@ -1,0 +1,664 @@
+{
+  "metadata": {
+    "id": "007",
+    "slug": "gestionnaire-de-vie-personnelle-avec-telegram-services-google-et-ia-vocale",
+    "title_en": "Personal Life Manager with Telegram, Google Services & Voice-Enabled AI",
+    "title_fr": "Gestionnaire de vie personnelle avec Telegram, services Google et IA vocale",
+    "description_short_en": "Manage emails, calendar, and tasks with Caylee—your AI assistant on Telegram. Enjoy hands-free voice control and smart Google integration. Learn more!",
+    "description_short_fr": "Gérez les e-mails, le calendrier et les tâches avec Caylee, votre assistant IA sur Telegram. Profitez de la commande vocale mains libres et de l'intégration intelligente de Google. Apprendre encore plus!",
+    "description_full_en": "Personal Life Manager with Telegram, Google Services & Voice-Enabled AI\n1. Workflow Overview\nThis workflow implements a\nPersonal Life Manager\nintegrating Telegram, Google services (Calendar, Tasks, Gmail), and Voice-Enabled AI using OpenAI/OpenRouter models. Its primary purpose is to allow users to interact with their digital life through Telegram messages and voice notes, enabling hands-free management of emails, calendar events, and tasks via conversational AI.\nLogical blocks of the workflow:\n1.1 Input Reception and Preprocessing:\nReceives Telegram messages or voice notes, distinguishes input type (voice or text), and prepares data for processing.\n1.2 Voice Transcription:\nConverts incoming voice messages from Telegram into text using OpenAI's transcription API.\n1.3 Contextual Memory Management:\nMaintains a conversational memory buffer keyed per user to allow contextual AI interactions.\n1.4 AI Processing and Task Handling:\nThe core AI agent “Caylee” processes user queries by accessing Gmail, Google Calendar, Tasks, and responding accordingly.\n1.5 Google Services Integration:\nNodes specifically fetch emails, calendar events, and manage Google Tasks as requested by the user.\n1.6 Response Delivery:\nSends the AI-generated replies back to the user via Telegram.\nSupporting elements include sticky notes providing setup instructions, usage tips, and video tutorial links.\n2. Block-by-Block Analysis\n2.1 Input Reception and Preprocessing\nOverview:\nThis block captures incoming Telegram updates (messages or voice notes), distinguishes between voice and text inputs, and filters empty messages.\nNodes Involved:\nListen for incoming events\nVoice or Text (Set node)\nIf (Conditional node)\nGet Voice File\nNode Details:\nListen for incoming events\nType: Telegram Trigger\nRole: Entry point to capture Telegram messages (text or voice).\nConfig: Listens to \"message\" updates; uses Telegram credentials.\nInput: External webhook from Telegram.\nOutput: JSON message payload containing Telegram message data.\nFailure modes: Telegram API downtime, webhook misconfiguration, invalid message format.\nVoice or Text\nType: Set\nRole: Extracts message text or sets empty string if absent.\nConfig: Sets a variable\ntext\nwith\n{{$json?.message?.text || \"\"}}\nto handle both text and voice inputs uniformly.\nInput: From Telegram trigger node.\nOutput: Contains\ntext\nfield for downstream conditional check.\nIf\nType: If (Conditional)\nRole: Checks if the incoming message text is empty (distinguishes voice messages).\nConfig: Condition tests if\n{{$json.message.text}}\nis empty.\nInput: From \"Voice or Text\" node.\nOutput:\nTrue: No text present → proceed to get voice file.\nFalse: Text present → proceed to AI assistant directly.\nEdge cases: Empty messages (no text or voice), malformed messages.\nGet Voice File\nType: Telegram node (File resource)\nRole: Fetches the voice file from Telegram using the voice message file ID.\nConfig: Uses\n{{$('Listen for incoming events').item.json.message.voice.file_id}}\nto get the voice file.\nInput: Triggered if message has no text (voice message).\nOutput: Voice file binary data for transcription.\nFailure modes: File ID missing or expired, Telegram file API errors.\n2.2 Voice Transcription\nOverview:\nConverts the Telegram voice message audio into text using OpenAI’s transcription capabilities.\nNodes Involved:\nTranscribe a recording\nNode Details:\nTranscribe a recording\nType: OpenAI node (audio resource)\nRole: Transcribes voice audio to text.\nConfig: Operation set to \"transcribe\"; requires OpenAI API credentials.\nInput: Receives audio binary from \"Get Voice File\" node.\nOutput: Transcribed text for AI processing.\nEdge cases: Audio quality issues, transcription API errors, rate limits.\n2.3 Contextual Memory Management\nOverview:\nMaintains a sliding window memory buffer per user session to keep conversation context for the AI assistant.\nNodes Involved:\nWindow Buffer Memory\nNode Details:\nWindow Buffer Memory\nType: LangChain memory buffer (window)\nRole: Stores recent conversation messages keyed by Telegram user ID to maintain context.\nConfig: Session key derived from\n{{$('Listen for incoming events').first().json.message.from.id}}\n.\nInput: Connected to AI assistant node.\nOutput: Provides memory context for AI prompt.\nEdge cases: Memory overflow, session key missing, concurrency issues.\n2.4 AI Processing and Task Handling\nOverview:\nMain AI agent “Caylee” interprets user input, accesses Google APIs as needed, and generates responses.\nNodes Involved:\nCaylee, AI Assistant 👩🏻‍🏫\nOpenRouter\nGet Email\nGoogle Calendar\nCreate a task in Google Tasks\nGet many tasks in Google Tasks\nNode Details:\nCaylee, AI Assistant 👩🏻‍🏫\nType: LangChain Agent\nRole: Core conversational AI agent processing user queries.\nConfig: Uses a system message defining assistant behavior (personal assistant called Caylee with specific guidelines on email summary, calendar filtering, and date assumptions).\nInputs: Text from transcription or direct message, AI language model from OpenRouter, contextual memory, Google services nodes input.\nOutputs: Text response to send back to Telegram.\nEdge cases: Model API errors, prompt formatting issues, external API failures.\nOpenRouter\nType: LangChain OpenRouter Language Model\nRole: Provides AI language model backend for Caylee.\nConfig: Uses OpenRouter API key credential.\nInput: Receives prompt from Caylee node.\nOutput: AI-generated completions.\nFailure modes: API key invalid, rate limits, network errors.\nGet Email\nType: Gmail Tool\nRole: Retrieves recent unread emails from user inbox.\nConfig: Limit 20 emails, filters for INBOX and UNREAD labels.\nInput: Triggered by AI agent when email info requested.\nOutput: Email summaries to AI agent.\nFailure modes: Gmail API auth errors, quota limits, network issues.\nGoogle Calendar\nType: Google Calendar Tool\nRole: Fetches calendar events after a date specified by AI.\nConfig: Uses dynamic date from AI input; retrieves summary and start time fields.\nInput: AI agent request.\nOutput: Calendar events data to AI agent.\nFailure modes: OAuth token expiry, invalid date format, API errors.\nCreate a task in Google Tasks\nType: Google Tasks Tool\nRole: Creates new task with title provided by AI.\nConfig: Task list ID hardcoded; title dynamically set from AI output.\nInput: AI agent triggers task creation.\nOutput: Confirmation of task creation.\nFailure modes: OAuth errors, invalid task data.\nGet many tasks in Google Tasks\nType: Google Tasks Tool\nRole: Retrieves all tasks from specified task list.\nConfig: Task list ID hardcoded.\nInput: AI agent requests task list.\nOutput: Task list data.\nFailure modes: OAuth failures, empty task list.\n2.5 Response Delivery\nOverview:\nDelivers the AI-generated textual response back to the Telegram user in Markdown format.\nNodes Involved:\nTelegram\nNode Details:\nTelegram\nType: Telegram node (send message)\nRole: Sends text messages to Telegram user chat.\nConfig: Text from AI output; chat ID from incoming Telegram message; Markdown parse mode; attribution disabled.\nInput: From AI assistant node output.\nOutput: Message sent to Telegram user.\nFailure modes: Telegram API rate limits, invalid chat ID, network errors.\nOn error: Set to continue without stopping the workflow.\n2.6 Supportive Sticky Notes\nSticky notes provide setup instructions, usage guidance, and links, including:\nSetup instructions for OpenRouter API key.\nOpenAI API key setup for transcription.\nExplanation of memory buffer role.\nGoogle Tasks, Gmail, Google Calendar node purposes.\nVideo tutorial link:\nhttps://youtu.be/ROgf5dVqYPQ\n.\nIntroductory user instructions and community link:\nAI Automation Engineering Community\n.\n3. Summary Table\nNode Name\nNode Type\nFunctional Role\nInput Node(s)\nOutput Node(s)\nSticky Note\nListen for incoming events\nTelegram Trigger\nEntry point for Telegram messages\n—\nVoice or Text\nVoice or Text\nSet\nExtract text or set empty string\nListen for incoming events\nIf\n## Process Telegram Request\nIf\nIf\nChecks if message text is empty\nVoice or Text\nGet Voice File / Caylee AI\nGet Voice File\nTelegram node (file resource)\nRetrieves voice file from Telegram\nIf (true branch)\nTranscribe a recording\nTranscribe a recording\nOpenAI (audio transcription)\nConverts voice audio to text\nGet Voice File\nCaylee AI\nUses OpenAI to convert voice to text.\nOpenAI API Key setup link\nWindow Buffer Memory\nLangChain memory buffer (window)\nMaintains conversation memory\n—\nCaylee AI\nThis node helps your agent remember the last few messages to stay on topic.\nCaylee, AI Assistant 👩🏻‍🏫\nLangChain Agent\nCore AI assistant processing user\nVoice or Text / Transcribe / Google nodes / Window Buffer Memory\nTelegram\nCaylee, your personal AI assistant: get email, calendar, tasks. Edit system message to adjust behavior.\nOpenRouter\nLangChain language model (OpenRouter)\nAI language model backend\nCaylee AI\nCaylee AI\n© 2025 Lucas Peyrin. Setup instructions in sticky note.\nGet Email\nGmail Tool\nFetches unread emails\nCaylee AI\nCaylee AI\nThis node allows your agent access your Gmail.\nGoogle Calendar\nGoogle Calendar Tool\nFetches calendar events\nCaylee AI\nCaylee AI\nThis node allows your agent access your Google calendar.\nCreate a task in Google Tasks\nGoogle Tasks Tool\nCreates new Google task\nCaylee AI\nCaylee AI\nThis node allows your agent create and get tasks from Google Tasks.\nGet many tasks in Google Tasks\nGoogle Tasks Tool\nRetrieves Google tasks list\nCaylee AI\nCaylee AI\nTelegram\nTelegram node (send message)\nSends AI response back to user\nCaylee AI\n—\nSends message back to Telegram.\nSticky Note\nSticky Note\nSetup and instructional notes\n—\n—\n# Try It Out! Instructions and community link:\nAI Automation Engineering Community\nSticky Note1\nSticky Note\nOpenRouter API key setup\n—\n—\nIn OpenRouter create API key and configure OpenRouter node.\nSticky Note13\nSticky Note\nOverview of Caylee AI Assistant\n—\n—\nCaylee, your personal AI assistant: get email, calendar, and tasks.\nSticky Note15\nSticky Note\nExplains memory buffer node\n—\n—\nThis node helps your agent remember the last few messages to stay on topic.\nSticky Note16\nSticky Note\nExplains Google Tasks integration\n—\n—\nThis node allows your agent create and get tasks from Google Tasks.\nSticky Note18\nSticky Note\nExplains Gmail integration\n—\n—\nThis node allows your agent access your Gmail.\nSticky Note19\nSticky Note\nExplains Google Calendar integration\n—\n—\nThis node allows your agent access your Google calendar.\nSticky Note20\nSticky Note\nExplains OpenAI transcription setup\n—\n—\nUses OpenAI to convert voice to text.\nOpenAI API Key setup link\nSticky Note2\nSticky Note\nVideo tutorial link\n—\n—\nVideo Tutorial\nSticky Note3\nSticky Note\nUser instructions and community link\n—\n—\n# Try It Out! with Telegram commands examples and community link.\nSticky Note4\nSticky Note\nExplains Telegram response node\n—\n—\nSend message back to Telegram.\n4. Reproducing the Workflow from Scratch\nCreate Telegram Trigger node (\"Listen for incoming events\")\nType: Telegram Trigger\nConfigure: Listen to \"message\" updates, set webhook ID.\nCredentials: Connect Telegram API account.\nPosition: Start node.\nAdd Set node (\"Voice or Text\")\nType: Set\nParameters: Create field\ntext\nwith expression\n{{$json?.message?.text || \"\"}}\n.\nConnect from Telegram Trigger node.\nAdd If node (\"If\")\nType: If (version 2)\nCondition: Check if\n{{$json.message.text}}\nis empty (string empty operator).\nConnect from \"Voice or Text\" node.\nAdd Telegram node (\"Get Voice File\")\nType: Telegram\nResource: File\nParameters: File ID set to\n{{$('Listen for incoming events').item.json.message.voice.file_id}}\n.\nCredentials: Telegram API account.\nConnect from If node, True branch (empty text).\nAdd OpenAI node (\"Transcribe a recording\")\nType: OpenAI (resource audio)\nOperation: Transcribe\nCredentials: OpenAI API key configured.\nConnect from \"Get Voice File\".\nAdd LangChain Window Buffer Memory node (\"Window Buffer Memory\")\nType: @n8n/n8n-nodes-langchain.memoryBufferWindow\nParameters:\nsessionKey\nset to\n{{$('Listen for incoming events').first().json.message.from.id}}\n, sessionIdType: customKey.\nPosition near AI node.\nAdd LangChain OpenRouter Language Model node (\"OpenRouter\")\nType: @n8n/n8n-nodes-langchain.lmChatOpenRouter\nCredentials: Create and attach OpenRouter API key credential.\nNo specific parameters required.\nAdd LangChain Agent node (\"Caylee, AI Assistant 👩🏻‍🏫\")\nType: @n8n/n8n-nodes-langchain.agent\nParameters:\nText input:\n{{$json.text}}\n(from transcription or text message).\nSystem message: Define assistant behavior (see node for example).\nPrompt type: Define.\nConnect inputs:\nAI Language Model: Connect from OpenRouter node.\nAI Memory: Connect from Window Buffer Memory node.\nAI Tools (multiple): Connect from Gmail, Google Calendar, Google Tasks nodes.\nConnect from If node False branch (text message) and from Transcribe node.\nAdd Gmail Tool node (\"Get Email\")\nType: Gmail Tool\nOperation: Get All\nFilters: LabelIds: INBOX, UNREAD; Limit: 20.\nCredentials: Gmail OAuth2 account.\nConnect to AI Tools input of AI Agent node.\nAdd Google Calendar Tool node (\"Google Calendar\")\nType: Google Calendar Tool\nOperation: Get All\nParameters: TimeMin set dynamically from AI input using expression:\n={{$fromAI(\"date\",\"the date after which to fetch the messages in format YYYY-MM-DDTHH:MM:SS\")}}\nCredentials: Google Calendar OAuth2 account.\nConnect to AI Tools input of AI Agent node.\nAdd Google Tasks Tool node (\"Create a task in Google Tasks\")\nType: Google Tasks Tool\nOperation: Create\nParameters: Task list ID pre-set, title dynamically set from AI input:\n={{$fromAI('Title', '', 'string')}}\nCredentials: Google Tasks OAuth2 account.\nConnect to AI Tools input of AI Agent node.\nAdd Google Tasks Tool node (\"Get many tasks in Google Tasks\")\nType: Google Tasks Tool\nOperation: Get All\nTask list ID pre-set.\nCredentials: Google Tasks OAuth2 account.\nConnect to AI Tools input of AI Agent node.\nAdd Telegram node (\"Telegram\")\nType: Telegram (send message)\nParameters:\nText:\n={{ $json.output }}\n(AI agent output).\nChat ID:\n={{ $('Listen for incoming events').first().json.message.from.id }}\nAdditional fields: Parse mode Markdown, no attribution.\nCredentials: Telegram API account.\nConnect from AI Agent node output.\nOn error: Set to continue (do not stop workflow).\nConnect Nodes:\nTelegram Trigger → Voice or Text → If\nIf True → Get Voice File → Transcribe a recording → Caylee AI\nIf False → Caylee AI\nCaylee AI → Telegram (send message)\nGoogle services nodes → Caylee AI (as AI tools inputs)\nWindow Buffer Memory → Caylee AI (AI memory input)\nOpenRouter → Caylee AI (AI language model input)\nCredential Setup:\nTelegram API account (bot token)\nOpenAI API key (for transcription)\nOpenRouter API key (for AI language model)\nGmail OAuth2 account\nGoogle Calendar OAuth2 account\nGoogle Tasks OAuth2 account\nFinal Checks:\nWebhook URLs registered properly with Telegram.\nAll credentials authorized and tested.\nSystem message for AI assistant customized for desired behavior.\n5. General Notes & Resources\nNote Content\nContext or Link\n# Try It Out! Launch Caylee—your personal AI assistant that handles voice & text via Telegram to manage your digital life. Commands example included.\nSticky Note3\nOpenRouter API key creation instructions and node configuration details.\nSticky Note1, OpenRouter node credential setup\nOpenAI API key creation instructions for voice transcription.\nSticky Note20, Transcribe node credential setup\nThis node helps your agent remember the last few messages to stay on topic.\nSticky Note15, Window Buffer Memory node\nThis node allows your agent create and get tasks from Google Tasks.\nSticky Note16, Google Tasks nodes\nThis node allows your agent access your Gmail.\nSticky Note18, Gmail Tool node\nThis node allows your agent access your Google calendar.\nSticky Note19, Google Calendar node\nVideo tutorial for setup and usage:\nhttps://youtu.be/ROgf5dVqYPQ\nSticky Note2\nAI Automation Engineering Community for support and learning:\nhttps://www.skool.com/ai-automation-engineering-3014\nSticky Note3\nDisclaimer:\nThe text provided originates exclusively from an automated workflow created using n8n, a workflow automation tool. The processing strictly complies with current content policies and contains no illegal, offensive, or protected elements. All handled data is legal and public.\nCopied to clipboard",
+    "description_full_fr": "Personal Life Manager with Telegram, Google Services & Voice-Enabled AI\n1. Workflow Overview\nThis workflow implements a\nPersonal Life Manager\nintegrating Telegram, Google services (Calendar, Tasks, Gmail), and Voice-Enabled AI using OpenAI/OpenRouter models. Its primary purpose is to allow users to interact with their digital life through Telegram messages and voice notes, enabling hands-free management of emails, calendar events, and tasks via conversational AI.\nLogical blocks of the workflow:\n1.1 Input Reception and Preprocessing:\nReceives Telegram messages or voice notes, distinguishes input type (voice or text), and prepares data for processing.\n1.2 Voice Transcription:\nConverts incoming voice messages from Telegram into text using OpenAI's transcription API.\n1.3 Contextual Memory Management:\nMaintains a conversational memory buffer keyed per user to allow contextual AI interactions.\n1.4 AI Processing and Task Handling:\nThe core AI agent “Caylee” processes user queries by accessing Gmail, Google Calendar, Tasks, and responding accordingly.\n1.5 Google Services Integration:\nNodes specifically fetch emails, calendar events, and manage Google Tasks as requested by the user.\n1.6 Response Delivery:\nSends the AI-generated replies back to the user via Telegram.\nSupporting elements include sticky notes providing setup instructions, usage tips, and video tutorial links.\n2. Block-by-Block Analysis\n2.1 Input Reception and Preprocessing\nOverview:\nThis block captures incoming Telegram updates (messages or voice notes), distinguishes between voice and text inputs, and filters empty messages.\nNodes Involved:\nListen for incoming events\nVoice or Text (Set node)\nIf (Conditional node)\nGet Voice File\nNode Details:\nListen for incoming events\nType: Telegram Trigger\nRole: Entry point to capture Telegram messages (text or voice).\nConfig: Listens to \"message\" updates; uses Telegram credentials.\nInput: External webhook from Telegram.\nOutput: JSON message payload containing Telegram message data.\nFailure modes: Telegram API downtime, webhook misconfiguration, invalid message format.\nVoice or Text\nType: Set\nRole: Extracts message text or sets empty string if absent.\nConfig: Sets a variable\ntext\nwith\n{{$json?.message?.text || \"\"}}\nto handle both text and voice inputs uniformly.\nInput: From Telegram trigger node.\nOutput: Contains\ntext\nfield for downstream conditional check.\nIf\nType: If (Conditional)\nRole: Checks if the incoming message text is empty (distinguishes voice messages).\nConfig: Condition tests if\n{{$json.message.text}}\nis empty.\nInput: From \"Voice or Text\" node.\nOutput:\nTrue: No text present → proceed to get voice file.\nFalse: Text present → proceed to AI assistant directly.\nEdge cases: Empty messages (no text or voice), malformed messages.\nGet Voice File\nType: Telegram node (File resource)\nRole: Fetches the voice file from Telegram using the voice message file ID.\nConfig: Uses\n{{$('Listen for incoming events').item.json.message.voice.file_id}}\nto get the voice file.\nInput: Triggered if message has no text (voice message).\nOutput: Voice file binary data for transcription.\nFailure modes: File ID missing or expired, Telegram file API errors.\n2.2 Voice Transcription\nOverview:\nConverts the Telegram voice message audio into text using OpenAI’s transcription capabilities.\nNodes Involved:\nTranscribe a recording\nNode Details:\nTranscribe a recording\nType: OpenAI node (audio resource)\nRole: Transcribes voice audio to text.\nConfig: Operation set to \"transcribe\"; requires OpenAI API credentials.\nInput: Receives audio binary from \"Get Voice File\" node.\nOutput: Transcribed text for AI processing.\nEdge cases: Audio quality issues, transcription API errors, rate limits.\n2.3 Contextual Memory Management\nOverview:\nMaintains a sliding window memory buffer per user session to keep conversation context for the AI assistant.\nNodes Involved:\nWindow Buffer Memory\nNode Details:\nWindow Buffer Memory\nType: LangChain memory buffer (window)\nRole: Stores recent conversation messages keyed by Telegram user ID to maintain context.\nConfig: Session key derived from\n{{$('Listen for incoming events').first().json.message.from.id}}\n.\nInput: Connected to AI assistant node.\nOutput: Provides memory context for AI prompt.\nEdge cases: Memory overflow, session key missing, concurrency issues.\n2.4 AI Processing and Task Handling\nOverview:\nMain AI agent “Caylee” interprets user input, accesses Google APIs as needed, and generates responses.\nNodes Involved:\nCaylee, AI Assistant 👩🏻‍🏫\nOpenRouter\nGet Email\nGoogle Calendar\nCreate a task in Google Tasks\nGet many tasks in Google Tasks\nNode Details:\nCaylee, AI Assistant 👩🏻‍🏫\nType: LangChain Agent\nRole: Core conversational AI agent processing user queries.\nConfig: Uses a system message defining assistant behavior (personal assistant called Caylee with specific guidelines on email summary, calendar filtering, and date assumptions).\nInputs: Text from transcription or direct message, AI language model from OpenRouter, contextual memory, Google services nodes input.\nOutputs: Text response to send back to Telegram.\nEdge cases: Model API errors, prompt formatting issues, external API failures.\nOpenRouter\nType: LangChain OpenRouter Language Model\nRole: Provides AI language model backend for Caylee.\nConfig: Uses OpenRouter API key credential.\nInput: Receives prompt from Caylee node.\nOutput: AI-generated completions.\nFailure modes: API key invalid, rate limits, network errors.\nGet Email\nType: Gmail Tool\nRole: Retrieves recent unread emails from user inbox.\nConfig: Limit 20 emails, filters for INBOX and UNREAD labels.\nInput: Triggered by AI agent when email info requested.\nOutput: Email summaries to AI agent.\nFailure modes: Gmail API auth errors, quota limits, network issues.\nGoogle Calendar\nType: Google Calendar Tool\nRole: Fetches calendar events after a date specified by AI.\nConfig: Uses dynamic date from AI input; retrieves summary and start time fields.\nInput: AI agent request.\nOutput: Calendar events data to AI agent.\nFailure modes: OAuth token expiry, invalid date format, API errors.\nCreate a task in Google Tasks\nType: Google Tasks Tool\nRole: Creates new task with title provided by AI.\nConfig: Task list ID hardcoded; title dynamically set from AI output.\nInput: AI agent triggers task creation.\nOutput: Confirmation of task creation.\nFailure modes: OAuth errors, invalid task data.\nGet many tasks in Google Tasks\nType: Google Tasks Tool\nRole: Retrieves all tasks from specified task list.\nConfig: Task list ID hardcoded.\nInput: AI agent requests task list.\nOutput: Task list data.\nFailure modes: OAuth failures, empty task list.\n2.5 Response Delivery\nOverview:\nDelivers the AI-generated textual response back to the Telegram user in Markdown format.\nNodes Involved:\nTelegram\nNode Details:\nTelegram\nType: Telegram node (send message)\nRole: Sends text messages to Telegram user chat.\nConfig: Text from AI output; chat ID from incoming Telegram message; Markdown parse mode; attribution disabled.\nInput: From AI assistant node output.\nOutput: Message sent to Telegram user.\nFailure modes: Telegram API rate limits, invalid chat ID, network errors.\nOn error: Set to continue without stopping the workflow.\n2.6 Supportive Sticky Notes\nSticky notes provide setup instructions, usage guidance, and links, including:\nSetup instructions for OpenRouter API key.\nOpenAI API key setup for transcription.\nExplanation of memory buffer role.\nGoogle Tasks, Gmail, Google Calendar node purposes.\nVideo tutorial link:\nhttps://youtu.be/ROgf5dVqYPQ\n.\nIntroductory user instructions and community link:\nAI Automation Engineering Community\n.\n3. Summary Table\nNode Name\nNode Type\nFunctional Role\nInput Node(s)\nOutput Node(s)\nSticky Note\nListen for incoming events\nTelegram Trigger\nEntry point for Telegram messages\n—\nVoice or Text\nVoice or Text\nSet\nExtract text or set empty string\nListen for incoming events\nIf\n## Process Telegram Request\nIf\nIf\nChecks if message text is empty\nVoice or Text\nGet Voice File / Caylee AI\nGet Voice File\nTelegram node (file resource)\nRetrieves voice file from Telegram\nIf (true branch)\nTranscribe a recording\nTranscribe a recording\nOpenAI (audio transcription)\nConverts voice audio to text\nGet Voice File\nCaylee AI\nUses OpenAI to convert voice to text.\nOpenAI API Key setup link\nWindow Buffer Memory\nLangChain memory buffer (window)\nMaintains conversation memory\n—\nCaylee AI\nThis node helps your agent remember the last few messages to stay on topic.\nCaylee, AI Assistant 👩🏻‍🏫\nLangChain Agent\nCore AI assistant processing user\nVoice or Text / Transcribe / Google nodes / Window Buffer Memory\nTelegram\nCaylee, your personal AI assistant: get email, calendar, tasks. Edit system message to adjust behavior.\nOpenRouter\nLangChain language model (OpenRouter)\nAI language model backend\nCaylee AI\nCaylee AI\n© 2025 Lucas Peyrin. Setup instructions in sticky note.\nGet Email\nGmail Tool\nFetches unread emails\nCaylee AI\nCaylee AI\nThis node allows your agent access your Gmail.\nGoogle Calendar\nGoogle Calendar Tool\nFetches calendar events\nCaylee AI\nCaylee AI\nThis node allows your agent access your Google calendar.\nCreate a task in Google Tasks\nGoogle Tasks Tool\nCreates new Google task\nCaylee AI\nCaylee AI\nThis node allows your agent create and get tasks from Google Tasks.\nGet many tasks in Google Tasks\nGoogle Tasks Tool\nRetrieves Google tasks list\nCaylee AI\nCaylee AI\nTelegram\nTelegram node (send message)\nSends AI response back to user\nCaylee AI\n—\nSends message back to Telegram.\nSticky Note\nSticky Note\nSetup and instructional notes\n—\n—\n# Try It Out! Instructions and community link:\nAI Automation Engineering Community\nSticky Note1\nSticky Note\nOpenRouter API key setup\n—\n—\nIn OpenRouter create API key and configure OpenRouter node.\nSticky Note13\nSticky Note\nOverview of Caylee AI Assistant\n—\n—\nCaylee, your personal AI assistant: get email, calendar, and tasks.\nSticky Note15\nSticky Note\nExplains memory buffer node\n—\n—\nThis node helps your agent remember the last few messages to stay on topic.\nSticky Note16\nSticky Note\nExplains Google Tasks integration\n—\n—\nThis node allows your agent create and get tasks from Google Tasks.\nSticky Note18\nSticky Note\nExplains Gmail integration\n—\n—\nThis node allows your agent access your Gmail.\nSticky Note19\nSticky Note\nExplains Google Calendar integration\n—\n—\nThis node allows your agent access your Google calendar.\nSticky Note20\nSticky Note\nExplains OpenAI transcription setup\n—\n—\nUses OpenAI to convert voice to text.\nOpenAI API Key setup link\nSticky Note2\nSticky Note\nVideo tutorial link\n—\n—\nVideo Tutorial\nSticky Note3\nSticky Note\nUser instructions and community link\n—\n—\n# Try It Out! with Telegram commands examples and community link.\nSticky Note4\nSticky Note\nExplains Telegram response node\n—\n—\nSend message back to Telegram.\n4. Reproducing the Workflow from Scratch\nCreate Telegram Trigger node (\"Listen for incoming events\")\nType: Telegram Trigger\nConfigure: Listen to \"message\" updates, set webhook ID.\nCredentials: Connect Telegram API account.\nPosition: Start node.\nAdd Set node (\"Voice or Text\")\nType: Set\nParameters: Create field\ntext\nwith expression\n{{$json?.message?.text || \"\"}}\n.\nConnect from Telegram Trigger node.\nAdd If node (\"If\")\nType: If (version 2)\nCondition: Check if\n{{$json.message.text}}\nis empty (string empty operator).\nConnect from \"Voice or Text\" node.\nAdd Telegram node (\"Get Voice File\")\nType: Telegram\nResource: File\nParameters: File ID set to\n{{$('Listen for incoming events').item.json.message.voice.file_id}}\n.\nCredentials: Telegram API account.\nConnect from If node, True branch (empty text).\nAdd OpenAI node (\"Transcribe a recording\")\nType: OpenAI (resource audio)\nOperation: Transcribe\nCredentials: OpenAI API key configured.\nConnect from \"Get Voice File\".\nAdd LangChain Window Buffer Memory node (\"Window Buffer Memory\")\nType: @n8n/n8n-nodes-langchain.memoryBufferWindow\nParameters:\nsessionKey\nset to\n{{$('Listen for incoming events').first().json.message.from.id}}\n, sessionIdType: customKey.\nPosition near AI node.\nAdd LangChain OpenRouter Language Model node (\"OpenRouter\")\nType: @n8n/n8n-nodes-langchain.lmChatOpenRouter\nCredentials: Create and attach OpenRouter API key credential.\nNo specific parameters required.\nAdd LangChain Agent node (\"Caylee, AI Assistant 👩🏻‍🏫\")\nType: @n8n/n8n-nodes-langchain.agent\nParameters:\nText input:\n{{$json.text}}\n(from transcription or text message).\nSystem message: Define assistant behavior (see node for example).\nPrompt type: Define.\nConnect inputs:\nAI Language Model: Connect from OpenRouter node.\nAI Memory: Connect from Window Buffer Memory node.\nAI Tools (multiple): Connect from Gmail, Google Calendar, Google Tasks nodes.\nConnect from If node False branch (text message) and from Transcribe node.\nAdd Gmail Tool node (\"Get Email\")\nType: Gmail Tool\nOperation: Get All\nFilters: LabelIds: INBOX, UNREAD; Limit: 20.\nCredentials: Gmail OAuth2 account.\nConnect to AI Tools input of AI Agent node.\nAdd Google Calendar Tool node (\"Google Calendar\")\nType: Google Calendar Tool\nOperation: Get All\nParameters: TimeMin set dynamically from AI input using expression:\n={{$fromAI(\"date\",\"the date after which to fetch the messages in format YYYY-MM-DDTHH:MM:SS\")}}\nCredentials: Google Calendar OAuth2 account.\nConnect to AI Tools input of AI Agent node.\nAdd Google Tasks Tool node (\"Create a task in Google Tasks\")\nType: Google Tasks Tool\nOperation: Create\nParameters: Task list ID pre-set, title dynamically set from AI input:\n={{$fromAI('Title', '', 'string')}}\nCredentials: Google Tasks OAuth2 account.\nConnect to AI Tools input of AI Agent node.\nAdd Google Tasks Tool node (\"Get many tasks in Google Tasks\")\nType: Google Tasks Tool\nOperation: Get All\nTask list ID pre-set.\nCredentials: Google Tasks OAuth2 account.\nConnect to AI Tools input of AI Agent node.\nAdd Telegram node (\"Telegram\")\nType: Telegram (send message)\nParameters:\nText:\n={{ $json.output }}\n(AI agent output).\nChat ID:\n={{ $('Listen for incoming events').first().json.message.from.id }}\nAdditional fields: Parse mode Markdown, no attribution.\nCredentials: Telegram API account.\nConnect from AI Agent node output.\nOn error: Set to continue (do not stop workflow).\nConnect Nodes:\nTelegram Trigger → Voice or Text → If\nIf True → Get Voice File → Transcribe a recording → Caylee AI\nIf False → Caylee AI\nCaylee AI → Telegram (send message)\nGoogle services nodes → Caylee AI (as AI tools inputs)\nWindow Buffer Memory → Caylee AI (AI memory input)\nOpenRouter → Caylee AI (AI language model input)\nCredential Setup:\nTelegram API account (bot token)\nOpenAI API key (for transcription)\nOpenRouter API key (for AI language model)\nGmail OAuth2 account\nGoogle Calendar OAuth2 account\nGoogle Tasks OAuth2 account\nFinal Checks:\nWebhook URLs registered properly with Telegram.\nAll credentials authorized and tested.\nSystem message for AI assistant customized for desired behavior.\n5. General Notes & Resources\nNote Content\nContext or Link\n# Try It Out! Launch Caylee—your personal AI assistant that handles voice & text via Telegram to manage your digital life. Commands example included.\nSticky Note3\nOpenRouter API key creation instructions and node configuration details.\nSticky Note1, OpenRouter node credential setup\nOpenAI API key creation instructions for voice transcription.\nSticky Note20, Transcribe node credential setup\nThis node helps your agent remember the last few messages to stay on topic.\nSticky Note15, Window Buffer Memory node\nThis node allows your agent create and get tasks from Google Tasks.\nSticky Note16, Google Tasks nodes\nThis node allows your agent access your Gmail.\nSticky Note18, Gmail Tool node\nThis node allows your agent access your Google calendar.\nSticky Note19, Google Calendar node\nVideo tutorial for setup and usage:\nhttps://youtu.be/ROgf5dVqYPQ\nSticky Note2\nAI Automation Engineering Community for support and learning:\nhttps://www.skool.com/ai-automation-engineering-3014\nSticky Note3\nDisclaimer:\nThe text provided originates exclusively from an automated workflow created using n8n, a workflow automation tool. The processing strictly complies with current content policies and contains no illegal, offensive, or protected elements. All handled data is legal and public.\nCopied to clipboard\n\n",
+    "category": "CRM",
+    "complexity": "Advanced",
+    "tags_en": [],
+    "tags_fr": [],
+    "author": "Derek Cheung",
+    "date": "Unknown",
+    "url_original": "https://n8nworkflows.xyz/workflows/personal-life-manager-with-telegram-google-services-voice-enabled-ai-8237",
+    "nodes_count": 24
+  },
+  "workflow_json": {
+    "meta": {
+      "instanceId": "04ddf1130268840c229f501edc57936c3c131339e8b0cdd696fcf3a7c69e696e",
+      "templateId": "2462",
+      "templateCredsSetupCompleted": true
+    },
+    "nodes": [
+      {
+        "id": "c70236ea-91ab-4e47-b6f6-63a70ede5d3c",
+        "name": "Google Calendar",
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "position": [
+          3280,
+          816
+        ],
+        "parameters": {
+          "options": {
+            "fields": "=items(summary, start(dateTime))",
+            "timeMin": "={{$fromAI(\"date\",\"the date after which to fetch the messages in format YYYY-MM-DDTHH:MM:SS\")}}"
+          },
+          "calendar": {
+            "__rl": true,
+            "mode": "list",
+            "value": "derekcheungsa@gmail.com",
+            "cachedResultName": "derekcheungsa@gmail.com"
+          },
+          "operation": "getAll"
+        },
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "TZCTCXv52Z6RRSFv",
+            "name": "Google Calendar account"
+          }
+        },
+        "typeVersion": 1.1
+      },
+      {
+        "id": "d2287bea-de47-4180-8ee6-55d4ab1a89da",
+        "name": "Window Buffer Memory",
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "position": [
+          2096,
+          816
+        ],
+        "parameters": {
+          "sessionKey": "={{ $('Listen for incoming events').first().json.message.from.id }}",
+          "sessionIdType": "customKey"
+        },
+        "typeVersion": 1.2
+      },
+      {
+        "id": "fa955731-86f6-4e4d-8604-dab5f52dee87",
+        "name": "Get Email",
+        "type": "n8n-nodes-base.gmailTool",
+        "position": [
+          2944,
+          816
+        ],
+        "webhookId": "a4ae7b5d-7686-4bee-a753-848932860b4e",
+        "parameters": {
+          "limit": 20,
+          "filters": {
+            "labelIds": [
+              "INBOX",
+              "UNREAD"
+            ],
+            "readStatus": "unread"
+          },
+          "operation": "getAll"
+        },
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "LAWyXYsbVPZL8nCq",
+            "name": "Gmail account 2"
+          }
+        },
+        "typeVersion": 2.1
+      },
+      {
+        "id": "64fe44db-af19-43eb-9ff1-de0a72a9e645",
+        "name": "Listen for incoming events",
+        "type": "n8n-nodes-base.telegramTrigger",
+        "position": [
+          960,
+          464
+        ],
+        "webhookId": "322dce18-f93e-4f86-b9b1-3305519b7834",
+        "parameters": {
+          "updates": [
+            "message"
+          ],
+          "additionalFields": {}
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "KdvuMXJQ1nq0hhc7",
+            "name": "Telegram account"
+          }
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "e35c04ff-a050-4564-8c1b-5b22b556872f",
+        "name": "Telegram",
+        "type": "n8n-nodes-base.telegram",
+        "onError": "continueErrorOutput",
+        "position": [
+          2768,
+          448
+        ],
+        "webhookId": "2c133a40-af48-4106-bc1a-be6047840a89",
+        "parameters": {
+          "text": "={{ $json.output }}",
+          "chatId": "={{ $('Listen for incoming events').first().json.message.from.id }}",
+          "additionalFields": {
+            "parse_mode": "Markdown",
+            "appendAttribution": false
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "KdvuMXJQ1nq0hhc7",
+            "name": "Telegram account"
+          }
+        },
+        "typeVersion": 1.1
+      },
+      {
+        "id": "e791d4f8-2c19-4c14-a71e-39a04f22e944",
+        "name": "If",
+        "type": "n8n-nodes-base.if",
+        "position": [
+          1408,
+          464
+        ],
+        "parameters": {
+          "options": {},
+          "conditions": {
+            "options": {
+              "version": 2,
+              "leftValue": "",
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "a0bf9719-4272-46f6-ab3b-eda6f7b44fd8",
+                "operator": {
+                  "type": "string",
+                  "operation": "empty",
+                  "singleValue": true
+                },
+                "leftValue": "={{ $json.message.text }}",
+                "rightValue": ""
+              }
+            ]
+          }
+        },
+        "typeVersion": 2.2
+      },
+      {
+        "id": "b67a2a93-517b-469e-aaa4-32c422710743",
+        "name": "Voice or Text",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          1184,
+          464
+        ],
+        "parameters": {
+          "fields": {
+            "values": [
+              {
+                "name": "text",
+                "stringValue": "={{ $json?.message?.text || \"\" }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "typeVersion": 3.2
+      },
+      {
+        "id": "8105c39f-9e87-44c4-9215-b3777f0b4164",
+        "name": "Get Voice File",
+        "type": "n8n-nodes-base.telegram",
+        "position": [
+          1632,
+          384
+        ],
+        "webhookId": "ef3f120e-c212-45ff-99b5-b6a5a82598d8",
+        "parameters": {
+          "fileId": "={{ $('Listen for incoming events').item.json.message.voice.file_id }}",
+          "resource": "file",
+          "additionalFields": {}
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "KdvuMXJQ1nq0hhc7",
+            "name": "Telegram account"
+          }
+        },
+        "typeVersion": 1.1
+      },
+      {
+        "id": "5537c777-f003-4673-b48a-4993a0c10520",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          1152,
+          352
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 624,
+          "height": 279,
+          "content": "## Process Telegram Request\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "7e018d55-ae6b-46a9-baa9-9259ac82ee1f",
+        "cid": "Ikx1Y2FzIFBleXJpbiI",
+        "name": "Sticky Note1",
+        "type": "n8n-nodes-base.stickyNote",
+        "notes": "© 2025 Lucas Peyrin",
+        "creator": "Lucas Peyrin",
+        "position": [
+          1664,
+          768
+        ],
+        "parameters": {
+          "color": 3,
+          "width": 294,
+          "height": 316,
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n1. [In OpenRouter](https://openrouter.ai/settings/keys) click **“Create API key”** and copy it.\n\n2. Open the ```OpenRouter``` node:\n   * **Select Credential → Create New**\n   * Paste into **API Key** and **Save**\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "15b431c9-743d-4e29-a355-8ef42658e0c6",
+        "name": "OpenRouter",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+        "position": [
+          1760,
+          800
+        ],
+        "parameters": {
+          "options": {}
+        },
+        "credentials": {
+          "openRouterApi": {
+            "id": "6ncUAyBiAVcbEpuf",
+            "name": "OpenRouter account 3"
+          }
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "8c360102-ad54-46b8-b268-7739b1c052b2",
+        "cid": "Ikx1Y2FzIFBleXJpbiI",
+        "name": "Sticky Note15",
+        "type": "n8n-nodes-base.stickyNote",
+        "notes": "© 2025 Lucas Peyrin",
+        "creator": "Lucas Peyrin",
+        "position": [
+          1984,
+          768
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 308,
+          "height": 260,
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\nThis node helps your agent remember the last few messages to stay on topic."
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "fa092f50-e916-4e98-8fa8-1686b034f439",
+        "cid": "Ikx1Y2FzIFBleXJpbiI",
+        "name": "Sticky Note16",
+        "type": "n8n-nodes-base.stickyNote",
+        "notes": "© 2025 Lucas Peyrin",
+        "creator": "Lucas Peyrin",
+        "position": [
+          2320,
+          768
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 484,
+          "height": 260,
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThis node allows your agent create and get tasks from Google Tasks\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "65a66122-3883-46a9-b19e-32976c7e125e",
+        "cid": "Ikx1Y2FzIFBleXJpbiI",
+        "name": "Sticky Note18",
+        "type": "n8n-nodes-base.stickyNote",
+        "notes": "© 2025 Lucas Peyrin",
+        "creator": "Lucas Peyrin",
+        "position": [
+          2832,
+          768
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 308,
+          "height": 260,
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\nThis node allows your agent access your gmail\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "73e4879a-c3a9-44b7-8647-789270f1b010",
+        "cid": "Ikx1Y2FzIFBleXJpbiI",
+        "name": "Sticky Note19",
+        "type": "n8n-nodes-base.stickyNote",
+        "notes": "© 2025 Lucas Peyrin",
+        "creator": "Lucas Peyrin",
+        "position": [
+          3168,
+          768
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 308,
+          "height": 260,
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\nThis node allows your agent access your Google calendar\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "60e9b4ca-dc14-4a3c-8091-93b442630ab4",
+        "cid": "Ikx1Y2FzIFBleXJpbiI",
+        "name": "Sticky Note20",
+        "type": "n8n-nodes-base.stickyNote",
+        "notes": "© 2025 Lucas Peyrin",
+        "creator": "Lucas Peyrin",
+        "position": [
+          1840,
+          352
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 324,
+          "height": 276,
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nUses OpenAI to convert voice to text.\n[In OpenAI](https://platform.openai.com/api-keys) click **“Create new secret key”** and copy it."
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "8d9ca104-253a-4004-9587-f8a7b211acfe",
+        "cid": "Ikx1Y2FzIFBleXJpbiI",
+        "name": "Sticky Note13",
+        "type": "n8n-nodes-base.stickyNote",
+        "notes": "© 2025 Lucas Peyrin",
+        "creator": "Lucas Peyrin",
+        "position": [
+          2224,
+          256
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 396,
+          "height": 380,
+          "content": "Caylee, your peronal AI Assistant:\n1. Get email\n2. Check calendar\n3. Get and create to-do tasks \n\nEdit the **System Message** to adjust your agent’s thinking, behavior, and replies.\n\n\n\n\n\n\n\n\n\n\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "155a0ba5-aaa6-4b77-a4ab-b409a91fd720",
+        "name": "Sticky Note3",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          528,
+          224
+        ],
+        "parameters": {
+          "color": 5,
+          "width": 380,
+          "height": 616,
+          "content": "# Try It Out!\n\nLaunch Caylee—your personal AI assistant that handles voice & text via Telegram to manage your digital life.\n\n**To get started:**\n\n1. **Connect all credentials** (Telegram, OpenAI, Gmail, etc.)\n2. **Activate the workflow** and message your Telegram bot:\n   • \"What emails do I have today?\"\n   • \"Show me my calendar for tomorrow\"\n   • \"Craete new to-do item\"\n   • 🎤 Send voice messages for hands-free interaction\n\n## Questions or Need Help?\n\nFor setup assistance, customization, or workflow support, join my Skool community!\n\n### [AI Automation Engineering Community](https://www.skool.com/ai-automation-engineering-3014)\n\nHappy learning! -- Derek Cheung\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "2f570b1c-867d-450d-9825-2058ed68c284",
+        "name": "Sticky Note4",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          2672,
+          352
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 304,
+          "height": 288,
+          "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nSend message back to Telegram\n"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "f1b2177e-f653-4d69-be85-51561bdd1799",
+        "name": "Create a task in Google Tasks",
+        "type": "n8n-nodes-base.googleTasksTool",
+        "position": [
+          2432,
+          816
+        ],
+        "parameters": {
+          "task": "MTY1MTc5NzMxMzA5NDc5MTQ5NzQ6MDow",
+          "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Title', ``, 'string') }}",
+          "additionalFields": {}
+        },
+        "credentials": {
+          "googleTasksOAuth2Api": {
+            "id": "93SncyHiar2YuBdr",
+            "name": "Google Tasks account"
+          }
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "8e71e30a-f584-48a0-8bb6-b638bfbb040a",
+        "name": "Get many tasks in Google Tasks",
+        "type": "n8n-nodes-base.googleTasksTool",
+        "position": [
+          2608,
+          816
+        ],
+        "parameters": {
+          "task": "MTY1MTc5NzMxMzA5NDc5MTQ5NzQ6MDow",
+          "operation": "getAll",
+          "additionalFields": {}
+        },
+        "credentials": {
+          "googleTasksOAuth2Api": {
+            "id": "93SncyHiar2YuBdr",
+            "name": "Google Tasks account"
+          }
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "9e27496f-d602-473b-8244-29c2d1543a49",
+        "name": "Sticky Note2",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          3024,
+          240
+        ],
+        "parameters": {
+          "color": 7,
+          "width": 544,
+          "height": 400,
+          "content": "## [Video Tutorial](https://youtu.be/ROgf5dVqYPQ)\n@[youtube](ROgf5dVqYPQ)"
+        },
+        "typeVersion": 1
+      },
+      {
+        "id": "ed95b191-e482-4d52-bf5e-0ed2159e5db3",
+        "name": "Transcribe a recording",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "position": [
+          1952,
+          384
+        ],
+        "parameters": {
+          "options": {},
+          "resource": "audio",
+          "operation": "transcribe"
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "zdHV66qt9iIf65C6",
+            "name": "EU Open AI"
+          }
+        },
+        "typeVersion": 1.8
+      },
+      {
+        "id": "759b975f-d17c-4386-a5b3-12413f0361f4",
+        "name": "Caylee, AI Assistant 👩🏻‍🏫",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "position": [
+          2304,
+          448
+        ],
+        "parameters": {
+          "text": "={{ $json.text }}",
+          "options": {
+            "systemMessage": "=You are a helpful personal assistant called Caylee. \n\nToday's date is {{ $today.format('yyyy-MM-dd') }}.\n\nGuidelines:\n- When summarizing emails, include Sender, Message date, subject, and brief summary of email.\n- if the user did not specify a date in the request assume they are asking for today\n- When answering questions about calendar events, filter out events that don't apply to the question.  For example, the question is about events for today, only reply with events for today. Don't mention future events if it's more than 1 week away"
+          },
+          "promptType": "define"
+        },
+        "typeVersion": 1.6
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "If": {
+        "main": [
+          [
+            {
+              "node": "Get Voice File",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Caylee, AI Assistant 👩🏻‍🏫",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Email": {
+        "ai_tool": [
+          [
+            {
+              "node": "Caylee, AI Assistant 👩🏻‍🏫",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenRouter": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Caylee, AI Assistant 👩🏻‍🏫",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Voice or Text": {
+        "main": [
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Voice File": {
+        "main": [
+          [
+            {
+              "node": "Transcribe a recording",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Calendar": {
+        "ai_tool": [
+          [
+            {
+              "node": "Caylee, AI Assistant 👩🏻‍🏫",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Window Buffer Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "Caylee, AI Assistant 👩🏻‍🏫",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Transcribe a recording": {
+        "main": [
+          [
+            {
+              "node": "Caylee, AI Assistant 👩🏻‍🏫",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Listen for incoming events": {
+        "main": [
+          [
+            {
+              "node": "Voice or Text",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create a task in Google Tasks": {
+        "ai_tool": [
+          [
+            {
+              "node": "Caylee, AI Assistant 👩🏻‍🏫",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get many tasks in Google Tasks": {
+        "ai_tool": [
+          [
+            {
+              "node": "Caylee, AI Assistant 👩🏻‍🏫",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Caylee, AI Assistant 👩🏻‍🏫": {
+        "main": [
+          [
+            {
+              "node": "Telegram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  }
+}
