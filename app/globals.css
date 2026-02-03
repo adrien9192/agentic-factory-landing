@@ -8,14 +8,117 @@
   }
 
   h1, h2, h3, h4 {
-    @apply font-heading;
     letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  /* Primary CTA - Irresistible Button */
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center font-semibold text-white
+           bg-factory-orange px-8 py-4 rounded-lg text-lg
+           transition-all duration-200 ease-out
+           hover:bg-[#E55A2B] active:bg-[#CC4F26]
+           shadow-[0_4px_14px_0_rgba(255,107,53,0.39)]
+           hover:shadow-[0_6px_20px_rgba(255,107,53,0.5)]
+           hover:-translate-y-0.5 active:translate-y-0
+           min-h-[52px];
+  }
+
+  .btn-primary::after {
+    content: '';
+    @apply absolute inset-0 rounded-lg opacity-0 transition-opacity duration-200;
+    background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+  }
+
+  .btn-primary:hover::after {
+    @apply opacity-100;
+  }
+
+  /* Secondary CTA - Ghost Button */
+  .btn-secondary {
+    @apply relative inline-flex items-center justify-center font-semibold
+           border-2 border-factory-dark text-factory-dark
+           px-8 py-4 rounded-lg text-lg
+           transition-all duration-200 ease-out
+           hover:bg-factory-dark hover:text-white
+           hover:-translate-y-0.5 active:translate-y-0
+           min-h-[52px];
+  }
+
+  /* Card with lift effect */
+  .card-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .card-lift:hover {
+    @apply -translate-y-2 shadow-xl;
+  }
+
+  /* Feature card with left accent */
+  .feature-card {
+    @apply bg-white border border-factory-border rounded-lg p-6
+           relative overflow-hidden
+           transition-all duration-200;
+  }
+
+  .feature-card::before {
+    content: '';
+    @apply absolute left-0 top-0 bottom-0 w-1 bg-factory-orange
+           transform -translate-x-full transition-transform duration-200;
+  }
+
+  .feature-card:hover {
+    @apply border-factory-orange shadow-lg;
+  }
+
+  .feature-card:hover::before {
+    @apply translate-x-0;
   }
 }
 
 @layer utilities {
   .text-gradient {
     @apply bg-gradient-to-r from-factory-orange to-orange-600 bg-clip-text text-transparent;
+  }
+
+  /* Icon container with consistent styling */
+  .icon-box {
+    @apply w-12 h-12 rounded-lg bg-factory-dark flex items-center justify-center
+           transition-all duration-200;
+  }
+
+  .feature-card:hover .icon-box {
+    @apply bg-factory-orange scale-110;
+  }
+
+  /* Price badge styling */
+  .price-badge {
+    @apply bg-factory-dark text-white px-3 py-1.5 rounded-md
+           font-mono text-sm font-medium shadow-lg
+           border border-white/10;
+  }
+
+  /* Popular badge */
+  .badge-popular {
+    @apply absolute -top-3 left-1/2 -translate-x-1/2
+           bg-factory-orange text-white text-xs font-bold
+           px-3 py-1 rounded-full shadow-lg
+           whitespace-nowrap z-10;
+  }
+
+  /* Noise texture overlay */
+  .bg-noise {
+    position: relative;
+  }
+
+  .bg-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
   }
 
   .hero-pattern {
@@ -32,4 +135,26 @@
       linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
     background-size: 24px 24px;
   }
+}
+
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus states for accessibility */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+  @apply outline-none ring-2 ring-factory-orange ring-offset-2;
+}
+
+a:focus-visible,
+button:focus-visible {
+  @apply outline-none ring-2 ring-factory-orange ring-offset-2;
 }
