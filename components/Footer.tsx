@@ -45,7 +45,7 @@ export default function Footer() {
               <li><a href="mailto:digitalaine@gmail.com" className="text-gray-400 hover:text-factory-orange transition-colors">Contact</a></li>
               <li><a href="#" className="text-gray-400 hover:text-factory-orange transition-colors">Affiliates</a></li>
             </ul>
-          </nav>
+          </div>
         </div>
 
         {/* Bottom bar */}

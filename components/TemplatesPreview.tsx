@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -74,7 +75,6 @@ const legacyTemplates = [
     roi: '600%',
     time: '15 min',
     platforms: ['n8n', 'Make.com'],
-    slug: 'abandoned-cart-recovery',
     popular: true,
   },
   {
@@ -87,7 +87,6 @@ const legacyTemplates = [
     roi: '300%',
     time: '20 min',
     platforms: ['n8n', 'Make.com'],
-    slug: 'sms-appointment-reminder',
   },
   {
     id: '003',
@@ -99,7 +98,6 @@ const legacyTemplates = [
     roi: '451%',
     time: '25 min',
     platforms: ['n8n', 'Make.com'],
-    slug: 'lead-capture-nurture',
   },
   {
     id: '004',
@@ -207,9 +205,14 @@ export default function TemplatesPreview() {
 
   // Transform workflows to template format
   const allTemplates = [
-    ...legacyTemplates.map(t => ({ ...t, category: undefined as string | undefined })),
+    ...legacyTemplates.map(t => ({
+      ...t,
+      name: t.name,
+      title: undefined as string | undefined,
+    })),
     ...workflows.map((w, idx) => ({
       id: w.id,
+      name: undefined as string | undefined,
       title: w.title_fr,
       description: w.description_short_fr,
       price: w.complexity === 'Advanced' ? '€50' : '€30',
@@ -217,6 +220,8 @@ export default function TemplatesPreview() {
       slug: w.slug,
       category: w.category as string | undefined,
       popular: idx === 0, // Mark first workflow as popular
+      roi: undefined as string | undefined,
+      time: undefined as string | undefined,
     })),
   ]
 
@@ -279,47 +284,36 @@ export default function TemplatesPreview() {
 
               {/* Content */}
               <div className="p-5">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="tag-chip">
-                    {template.category}
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-heading font-medium text-factory-dark mb-2">
-                  {template.name}
-                </h3>
-
-                <p className="text-sm text-factory-text-secondary mb-4 leading-relaxed">
-                  {template.description}
-                </p>
-
-                {/* Stats */}
-                <div className="flex gap-4 mb-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <span className="font-mono font-semibold text-factory-green">{template.roi} ROI</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-factory-text-muted">⏱️</span>
-                    <span className="text-factory-text-secondary">{template.time}</span>
+                {template.category && (
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="tag-chip">
+                      {template.category}
+                    </div>
                   </div>
                 )}
 
-                {/* Price Badge (top-right) */}
-                <div className="price-badge absolute top-3 right-3">
-                  {template.price}
-                </div>
-              </div>
-
-              {/* Card Content */}
-              <div className="p-5">
-                <h3 className="text-lg font-medium text-factory-dark mb-1">
-                  {template.title}
+                <h3 className="text-lg font-heading font-medium text-factory-dark mb-2">
+                  {template.name || template.title}
                 </h3>
+
                 <p className="text-sm text-factory-text-secondary mb-4 leading-relaxed">
                   {template.description}
                 </p>
 
-                {/* Tags */}
+                {/* Stats (only for legacy templates with roi/time) */}
+                {template.roi && template.time && (
+                  <div className="flex gap-4 mb-4 text-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="font-mono font-semibold text-factory-green">{template.roi} ROI</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-factory-text-muted">⏱️</span>
+                      <span className="text-factory-text-secondary">{template.time}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Platforms Tags */}
                 <div className="flex gap-2 mb-4">
                   {template.platforms.map((platform) => (
                     <span
