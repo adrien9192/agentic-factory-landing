@@ -42,6 +42,7 @@ export default function Footer() {
             <div className="font-semibold text-white mb-3">Pages</div>
             <ul className="space-y-2 text-sm">
               <li><Link href="/pricing" className="text-gray-400 hover:text-factory-orange transition-colors">Pricing</Link></li>
+              <li><Link href="/blog" className="text-gray-400 hover:text-factory-orange transition-colors">Blog</Link></li>
               <li><Link href="/#features" className="text-gray-400 hover:text-factory-orange transition-colors">Pourquoi Nous?</Link></li>
               <li><a href="mailto:digitalaine@gmail.com" className="text-gray-400 hover:text-factory-orange transition-colors">Contact</a></li>
               <li><a href="#" className="text-gray-400 hover:text-factory-orange transition-colors">Affiliates</a></li>
