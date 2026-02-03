@@ -13,23 +13,23 @@ export default function EmailCapture() {
   }
 
   return (
-    <section id="email-signup" className="py-24 bg-gradient-to-br from-primary-600 to-orange-500">
-      <div className="max-w-4xl mx-auto px-4 text-center">
+    <section id="email-signup" className="py-24 bg-factory-dark">
+      <div className="max-w-4xl mx-auto px-6 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold font-display text-white mb-6">
-            Launch Week Special
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Get First Access to New Templates
           </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Get early access and 20% off all templates. Join 500+ automation enthusiasts waiting for launch.
+          <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+            (Plus a Free Automation Cheat Sheet)
           </p>
 
           {/* Email form */}
-          <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8">
+          <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
@@ -37,39 +37,39 @@ export default function EmailCapture() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 required
-                className="flex-1 px-6 py-4 text-lg rounded-lg border-2 border-white/20 focus:border-white focus:outline-none"
+                className="flex-1 px-6 py-4 text-lg rounded-lg border-2 border-white/20 focus:border-factory-orange focus:outline-none bg-white/10 text-white placeholder:text-white/50"
               />
               <button
                 type="submit"
-                className="px-8 py-4 text-lg font-semibold text-primary-600 bg-white rounded-lg hover:bg-gray-50 transition-colors shadow-lg"
+                className="px-8 py-4 text-lg font-semibold text-white bg-factory-orange rounded-lg hover:bg-[#E55A2B] transition-colors duration-150 shadow-lg whitespace-nowrap"
               >
-                Get Early Access
+                Send Me the Good Stuff
               </button>
             </div>
 
-            <p className="mt-4 text-sm text-white/70">
+            <p className="mt-4 text-sm text-white/60">
               Click to send email request (opens your email client)
             </p>
           </form>
 
           {/* Benefits */}
-          <div className="flex flex-wrap justify-center gap-6 text-white/90 text-sm">
+          <div className="flex flex-wrap justify-center gap-6 text-white/80 text-sm">
             <div className="flex items-center gap-2">
               <span>✓</span>
-              <span>20% launch discount</span>
+              <span>No spam, ever</span>
             </div>
             <div className="flex items-center gap-2">
               <span>✓</span>
-              <span>First access to templates</span>
+              <span>Early access pricing</span>
             </div>
             <div className="flex items-center gap-2">
               <span>✓</span>
-              <span>Weekly automation tips</span>
+              <span>Unsubscribe anytime</span>
             </div>
           </div>
 
-          <p className="mt-6 text-sm text-white/70">
-            No spam. Unsubscribe anytime. Launch: Feb 17-24, 2026
+          <p className="mt-6 text-sm text-white/50">
+            Launch: February 17-24, 2026
           </p>
         </motion.div>
       </div>

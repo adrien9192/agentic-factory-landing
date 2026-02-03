@@ -9,22 +9,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
-          900: '#7f1d1d',
+        factory: {
+          dark: '#1C1C1E',
+          stone: '#E8E4DF',
+          orange: '#FF6B35',
+          green: '#2D936C',
+          surface: '#F7F5F2',
+          'surface-dark': '#2A2A2C',
+          'text-primary': '#1C1C1E',
+          'text-secondary': '#5C5C5E',
+          'text-muted': '#8E8E93',
+          border: '#D1CCC5',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Playfair Display', 'serif'],
+        heading: ['var(--font-space-grotesk)', 'sans-serif'],
+        body: ['var(--font-source-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-jetbrains-mono)', 'monospace'],
       },
     },
   },

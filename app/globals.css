@@ -4,13 +4,26 @@
 
 @layer base {
   body {
-    @apply bg-white text-gray-900 antialiased;
+    @apply bg-factory-surface text-factory-text-primary antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-heading;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-primary-600 to-orange-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-factory-orange to-orange-600 bg-clip-text text-transparent;
+  }
+
+  .hero-pattern {
+    background-color: #F7F5F2;
+    background-image:
+      linear-gradient(135deg, transparent 24%, #D1CCC5 25%, #D1CCC5 26%, transparent 27%),
+      linear-gradient(225deg, transparent 24%, #D1CCC5 25%, #D1CCC5 26%, transparent 27%);
+    background-size: 30px 30px;
   }
 
   .bg-grid-pattern {

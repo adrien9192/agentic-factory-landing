@@ -6,49 +6,40 @@ const templates = [
   {
     id: '001',
     name: 'Abandoned Cart Recovery',
-    category: 'E-commerce',
-    description: 'Shopify + SendGrid. Recover lost sales with 3-email sequence. Proven 600% ROI.',
+    title: 'Recover 12% of Lost Sales',
+    description: 'Every abandoned cart gets a perfectly-timed email sequence that brings buyers back — automatically.',
     price: '€49',
-    roi: '600% ROI',
-    time: '30min setup',
     platforms: ['n8n', 'Make.com'],
-    popular: true,
   },
   {
     id: '002',
-    name: 'SMS Appointment Reminders',
-    category: 'Services',
-    description: 'Google Calendar + Twilio. Reduce no-shows by 60%. Save €1,200/month.',
+    name: 'SMS Appointment Reminder',
+    title: 'Kill No-Shows Forever',
+    description: 'One missed appointment costs you €50+. This template sends reminders that cut no-shows by 80%.',
     price: '€39',
-    roi: '300% ROI',
-    time: '20min setup',
     platforms: ['n8n', 'Make.com'],
-    popular: true,
   },
   {
     id: '003',
-    name: 'Lead Capture → CRM → Nurture',
-    category: 'B2B',
-    description: 'Typeform + HubSpot + SendGrid. 5-email sequence. 2.5x conversion rate.',
+    name: 'Lead Capture → Email Nurture',
+    title: 'Turn Cold Leads Into Customers',
+    description: 'New lead comes in, personalized email sequence goes out — while you sleep.',
     price: '€59',
-    roi: '451% ROI',
-    time: '30min setup',
     platforms: ['n8n', 'Make.com'],
-    popular: true,
   },
 ]
 
 export default function TemplatesPreview() {
   return (
-    <section id="templates" className="py-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4">
+    <section id="templates" className="py-24 bg-factory-surface">
+      <div className="max-w-7xl mx-auto px-6">
         {/* Section header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">
-            Top Templates
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Choose Your Template
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Production-ready workflows tested with real integrations. 10 templates at launch.
+          <p className="text-lg text-factory-text-secondary max-w-3xl mx-auto">
+            Proven workflows that pay for themselves in days, not months.
           </p>
         </div>
 
@@ -61,46 +52,38 @@ export default function TemplatesPreview() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white rounded-xl border-2 border-gray-200 hover:border-primary-500 hover:shadow-xl transition-all overflow-hidden"
+              className="bg-white rounded-xl border border-factory-border overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
             >
-              {/* Badge */}
-              {template.popular && (
-                <div className="bg-gradient-to-r from-primary-600 to-orange-500 text-white text-sm font-semibold px-4 py-2 text-center">
-                  ⭐ Most Popular
-                </div>
-              )}
+              {/* Preview Image Area */}
+              <div className="aspect-video bg-factory-stone relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-factory-dark/10 to-factory-orange/20"></div>
 
-              {/* Content */}
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="text-xs font-semibold text-primary-600 uppercase tracking-wide mb-1">
-                      {template.category}
-                    </div>
-                    <h3 className="text-xl font-bold">{template.name}</h3>
-                  </div>
-                  <div className="text-2xl font-bold text-primary-600">{template.price}</div>
+                {/* Price Badge (top-right) */}
+                <div className="absolute top-3 right-3 bg-factory-dark text-white px-3 py-1.5 rounded-md font-mono text-sm font-medium">
+                  {template.price}
                 </div>
 
-                <p className="text-gray-600 mb-4">{template.description}</p>
-
-                {/* Stats */}
-                <div className="flex gap-4 mb-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <span className="font-semibold text-green-600">{template.roi}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-500">⏱️</span>
-                    <span className="text-gray-600">{template.time}</span>
-                  </div>
+                {/* Template icon/visual */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-6xl opacity-20">⚙️</div>
                 </div>
+              </div>
 
-                {/* Platforms */}
+              {/* Card Content */}
+              <div className="p-5">
+                <h3 className="text-lg font-medium text-factory-dark mb-1">
+                  {template.title}
+                </h3>
+                <p className="text-sm text-factory-text-secondary mb-4 leading-relaxed">
+                  {template.description}
+                </p>
+
+                {/* Tags */}
                 <div className="flex gap-2 mb-4">
                   {template.platforms.map((platform) => (
                     <span
                       key={platform}
-                      className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
+                      className="text-xs font-mono bg-factory-stone text-factory-dark px-2 py-1 rounded"
                     >
                       {platform}
                     </span>
@@ -121,14 +104,11 @@ export default function TemplatesPreview() {
 
         {/* View all CTA */}
         <div className="text-center">
-          <p className="text-gray-600 mb-4">
-            + 7 more templates at launch (Contact Forms, Reviews, Invoices, Social Media, and more)
-          </p>
           <a
             href="#email-signup"
-            className="inline-flex items-center px-6 py-3 text-lg font-semibold text-primary-600 border-2 border-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+            className="inline-flex items-center px-6 py-3 text-lg font-semibold border-2 border-factory-dark text-factory-dark rounded-lg hover:bg-factory-dark hover:text-white transition-all duration-150"
           >
-            Get Notified at Launch →
+            Get Early Access →
           </a>
         </div>
       </div>

@@ -4,75 +4,64 @@ import { motion } from 'framer-motion'
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-primary-50">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+    <section className="hero-pattern py-24 md:py-32">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid md:grid-cols-5 gap-12 items-center">
+          <motion.div
+            className="md:col-span-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            {/* Main heading */}
+            <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
+              Stop Losing 20 Hours a Week to Tasks{' '}
+              <span className="text-factory-orange">a Robot Should Do</span>
+            </h1>
 
-      <div className="relative z-10 max-w-6xl mx-auto text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          {/* Badge */}
-          <div className="inline-flex items-center px-4 py-2 mb-8 text-sm font-medium text-primary-700 bg-primary-100 rounded-full">
-            <span className="relative flex h-2 w-2 mr-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
-            </span>
-            Launching Soon • Get Early Access
-          </div>
+            {/* Subheadline */}
+            <p className="text-lg md:text-xl text-factory-text-secondary leading-relaxed mb-8 max-w-2xl">
+              Plug-and-play automation templates that pay for themselves in 48 hours — no coding, no agency, no BS.
+            </p>
 
-          {/* Main heading */}
-          <h1 className="text-5xl md:text-7xl font-bold font-display mb-6 leading-tight">
-            Production-Ready<br />
-            <span className="text-gradient">Automation Templates</span><br />
-            That Actually Work
-          </h1>
-
-          {/* Subheading */}
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Stop debugging free templates. Get tested, documented workflows for n8n & Make.com.{' '}
-            <span className="font-semibold text-gray-900">100% success rate guaranteed.</span>
-          </p>
-
-          {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-8 mb-12">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-600">100%</div>
-              <div className="text-sm text-gray-600">Success Rate</div>
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <a
+                href="#templates"
+                className="bg-factory-orange text-white font-semibold px-8 py-4 rounded-lg text-lg hover:bg-[#E55A2B] active:bg-[#CC4F26] transition-colors duration-150 shadow-sm hover:shadow-md text-center"
+              >
+                Browse Templates
+              </a>
+              <a
+                href="#video"
+                className="border-2 border-factory-dark text-factory-dark font-semibold px-8 py-4 rounded-lg text-lg hover:bg-factory-dark hover:text-white transition-all duration-150 text-center"
+              >
+                See How It Works (2 min)
+              </a>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-600">10-15h</div>
-              <div className="text-sm text-gray-600">Time Saved</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary-600">€29-59</div>
-              <div className="text-sm text-gray-600">Per Template</div>
-            </div>
-          </div>
 
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a
-              href="#email-signup"
-              className="px-8 py-4 text-lg font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-            >
-              Get Early Access
-            </a>
-            <a
-              href="#templates"
-              className="px-8 py-4 text-lg font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:border-primary-500 transition-colors"
-            >
-              Browse Templates
-            </a>
-          </div>
+            {/* Social proof */}
+            <p className="text-sm text-factory-text-muted">
+              No subscriptions • One-time payment • Own it forever
+            </p>
+          </motion.div>
 
-          {/* Social proof */}
-          <p className="mt-8 text-sm text-gray-500">
-            ✓ 30-day money-back guarantee • ✓ Lifetime updates included
-          </p>
-        </motion.div>
+          {/* Visual placeholder - can be illustration/screenshot */}
+          <motion.div
+            className="md:col-span-2 hidden md:block"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <div className="aspect-square rounded-xl bg-factory-stone border border-factory-border flex items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-factory-dark/5 to-factory-orange/10"></div>
+              <div className="relative text-center p-8">
+                <div className="text-6xl mb-4">⚙️</div>
+                <p className="text-factory-text-secondary font-medium">Automation Templates</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   )

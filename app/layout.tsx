@@ -1,29 +1,40 @@
 import type { Metadata } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Space_Grotesk, Source_Sans_3, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-const playfair = Playfair_Display({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-playfair',
-  weight: ['400', '700']
+  variable: '--font-space-grotesk',
+  weight: ['500', '700']
+})
+
+const sourceSans = Source_Sans_3({
+  subsets: ['latin'],
+  variable: '--font-source-sans',
+  weight: ['400', '600']
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  weight: ['500']
 })
 
 export const metadata: Metadata = {
-  title: 'Agentic Factory | Production-Ready Automation Templates',
-  description: 'Production-ready automation templates for n8n & Make.com. 100% success rate guaranteed. Save 10-15 hours per template.',
+  title: 'Agentic Factory | Stop Losing 20 Hours a Week to Robot Work',
+  description: 'Plug-and-play automation templates that pay for themselves in 48 hours. No coding, no agency, no BS.',
   keywords: ['n8n', 'make.com', 'automation', 'templates', 'workflows', 'no-code'],
   authors: [{ name: 'Agentic Factory' }],
   openGraph: {
-    title: 'Agentic Factory | Production-Ready Automation Templates',
-    description: 'Templates that actually work. 100% success rate guaranteed.',
+    title: 'Agentic Factory | Automation Templates That Actually Work',
+    description: 'Recover lost sales, kill no-shows, turn leads into customers — automatically.',
     type: 'website',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Agentic Factory',
-    description: 'Production-ready automation templates for n8n & Make.com',
+    description: 'Plug-and-play automation templates for n8n & Make.com',
   },
 }
 
@@ -33,8 +44,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="font-sans">{children}</body>
+    <html lang="en" className={`${spaceGrotesk.variable} ${sourceSans.variable} ${jetbrainsMono.variable}`}>
+      <body className="font-body bg-factory-surface text-factory-text-primary antialiased">{children}</body>
     </html>
   )
 }
